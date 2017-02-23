@@ -49,7 +49,7 @@ def webhook():
                         kernel.saveBrain("bot_brain.brn")
 
                     # kernel now ready for use
-                    bot_response = kernel.respond(message)
+                    bot_response = kernel.respond(message_text)
 
                     send_message(sender_id, bot_response)
 
