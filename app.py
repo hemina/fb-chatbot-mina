@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import aiml
 
 import requests
 from flask import Flask, request
@@ -39,7 +40,18 @@ def webhook():
                     recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
                     message_text = messaging_event["message"]["text"]  # the message's text
 
-                    send_message(sender_id, "got it, thanks!")
+                    kernel = aiml.Kernel()
+
+                    if os.path.isfile("bot_brain.brn"):
+                        kernel.bootstrap(brainFile = "bot_brain.brn")
+                    else:
+                        kernel.bootstrap(learnFiles = os.path.abspath("aiml/std-startup.xml"), commands = "load aiml b")
+                        kernel.saveBrain("bot_brain.brn")
+
+                    # kernel now ready for use
+                    bot_response = kernel.respond(message)
+
+                    send_message(sender_id, bot_response)
 
                 if messaging_event.get("delivery"):  # delivery confirmation
                     pass
