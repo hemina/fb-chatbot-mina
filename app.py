@@ -69,7 +69,8 @@ def webhook():
                     pass
 
                 if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
-                    pass
+                    bot_response ＝ messaging_event["postback"]
+                    send_template_message(sender_id, bot_response)
 
     return "ok", 200
 
@@ -120,13 +121,18 @@ def send_template_message(recipient_id, message_text):
             "buttons":[
             {
                 "type":"web_url",
-                "url":"https://petersapparel.parseapp.com",
-                "title":"Show Website"
+                "url":"http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet",
+                "title":"Show fundsheet Website"
             },
             {
             "type":"postback",
-            "title":"Start Chatting",
-            "payload":"hahaha"
+            "title":"English",
+            "payload":"English"
+            }，
+            {
+            "type":"postback",
+            "title":"Français",
+            "payload":"Français"
             }
             ]
             }
