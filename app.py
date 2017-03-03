@@ -45,15 +45,18 @@ def webhook():
                         message_text = "smile"
 
                     kernel = aiml.Kernel()
+                    kernel.setBotPredicate("name", "Pikachu")
 
                     if os.path.isfile("bot_brain.brn"):
                         kernel.bootstrap(brainFile = "bot_brain.brn")
                     else:
-                        kernel.bootstrap(learnFiles = os.path.abspath("aiml/std-startup.xml"), commands = "load aiml b")
+                        kernel.bootstrap(learnFiles = os.path.abspath("aiml/std-startup.xml", commands = "load aiml b"))#, commands = "load aiml b"
                         kernel.saveBrain("bot_brain.brn")
 
                     # kernel now ready for use
                     bot_response = kernel.respond(message_text)
+                    url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+message_text 
+                    bot_response += "Maybe you can try this link: "+ url
 
                     send_message(sender_id, bot_response)
 
