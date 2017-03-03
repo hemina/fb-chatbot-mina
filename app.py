@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import aiml
+import re
 
 import requests
 from flask import Flask, request
@@ -55,8 +56,9 @@ def webhook():
 
                     # kernel now ready for use
                     bot_response = kernel.respond(message_text)
-                    url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+message_text 
-                    bot_response += "Maybe you can try this link: "+ url
+                    keywords = re.sub(' ', '+', message_text)
+                    url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords 
+                    bot_response += " Maybe you can try this link: "+ url
 
                     send_message(sender_id, bot_response)
 
