@@ -60,7 +60,7 @@ def webhook():
                     url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords 
                     bot_response += " Maybe you can try this link: "+ url
 
-                    send_message(sender_id, bot_response)
+                    send_template_message(sender_id, bot_response)
 
                 if messaging_event.get("delivery"):  # delivery confirmation
                     pass
@@ -96,6 +96,53 @@ def send_message(recipient_id, message_text):
     if r.status_code != 200:
         log(r.status_code)
         log(r.text)
+        
+def send_template_message(recipient_id, message_text):
+
+    log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
+
+    params = {
+        "access_token": os.environ["PAGE_ACCESS_TOKEN"]
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
+    data = json.dumps({
+        "recipient": {
+            "id": recipient_id
+        },
+        "message":{
+            "attachment":{
+            "type":"template",
+            "payload":{
+            "template_type":"button",
+            "text":message_text,
+            "buttons":[
+            {
+                "type":"web_url",
+                "url":"http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet",
+                "title":"Show fundsheet Website"
+            },
+            {
+            "type":"postback",
+            "title":"English",
+            "payload":"English"
+            }，
+            {
+            "type":"postback",
+            "title":"Français",
+            "payload":"Français"
+            }
+            ]
+            }
+            }
+        }
+    })
+    r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
+    if r.status_code != 200:
+        log(r.status_code)
+        log(r.text)
+
 
 
 def log(message):  # simple wrapper for logging to stdout on heroku
