@@ -127,11 +127,6 @@ def send_template_message(recipient_id, message_text):
             "type":"postback",
             "title":"English",
             "payload":"English"
-            },
-            {
-            "type":"postback",
-            "title":"Français",
-            "payload":"Français"
             }
             ]
             }
