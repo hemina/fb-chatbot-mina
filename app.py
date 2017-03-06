@@ -60,7 +60,7 @@ def webhook():
                     url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords 
                     bot_response += " Maybe you can try this link: "+ url
 
-                    send_message(sender_id, bot_response)
+                    send_template_message(sender_id, bot_response)
 
                 if messaging_event.get("delivery"):  # delivery confirmation
                     pass
