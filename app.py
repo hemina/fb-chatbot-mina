@@ -69,9 +69,9 @@ def webhook():
                     pass
 
                 if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
-                    #print "postback", messaging_event
-                    sender_id = messaging_event["sender"]["id"]
-                    send_message(sender_id, messaging_event)
+                    print "postback", messaging_event
+
+
 
     return "ok", 200
 
@@ -117,22 +117,52 @@ def send_template_message(recipient_id, message_text):
             "attachment":{
             "type":"template",
             "payload":{
-            "template_type":"button",
-            "text":message_text,
-            "buttons":[
-            {
-                "type":"web_url",
-                "url":"http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet",
-                "title":"Show fundsheet Website"
-            },
-            {
-            "type":"postback",
-            "title":"English",
-            "payload":"English"
+            "template_type":"generic",
+            "elements": [{
+            "title": "rift",
+            "subtitle": "Next-generation virtual reality",
+            "item_url": "https://www.oculus.com/en-us/rift/",               
+            "image_url": "http://messengerdemo.parseapp.com/img/rift.png",
+            "buttons": [{
+              "type": "web_url",
+              "url": "https://www.oculus.com/en-us/rift/",
+              "title": "Open Web URL"
+            }, {
+              "type": "postback",
+              "title": "Call Postback",
+              "payload": "Payload for first bubble",
+            }],
+          }, {
+            "title": "touch",
+            "subtitle": "Your Hands, Now in VR",
+            "item_url": "https://www.oculus.com/en-us/touch/",               
+            "image_url": "http://messengerdemo.parseapp.com/img/touch.png",
+            "buttons": [{
+              "type": "web_url",
+              "url": "https://www.oculus.com/en-us/touch/",
+              "title": "Open Web URL"
+            }, {
+              "type": "postback",
+              "title": "Call Postback",
+              "payload": "Payload for second bubble",
+            }]
+            # "text":message_text,
+            # "buttons":[
+            # {
+            #     "type":"web_url",
+            #     "url":"http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet",
+            #     "title":"Show fundsheet Website"
+            # },
+            # {
+            # "type":"postback",
+            # "title":"English",
+            # "payload":"English"
+            # }
+            # ]
             }
             ]
             }
-            }
+        }
         }
     })
     r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
