@@ -60,7 +60,7 @@ def webhook():
                     keywords = re.sub(' ', '+', message_text)
                     url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords 
                     user_info = get_user_info(recipient_id)
-                    bot_response += " Maybe you can try this link: "+ url + " " + user_info
+                    bot_response += " Maybe you can try this link: "+ url + " " + str(user_info)
 
 
                     send_message(sender_id, bot_response)
