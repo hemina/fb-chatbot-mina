@@ -176,7 +176,8 @@ def received_postback(messaging_event):
     # The 'payload' param is a developer-defined field which is set in a postback button for Structured Messages. 
     payload = messaging_event["postback"]["payload"] 
 
-    log("Received postback for user %d and page %d with payload '%s' ", sender_id, recipient_id, payload)
+    log("Received postback for {user} and page {recipient}: {text}".format(user=sender_id, recipient=recipient_id, text=payload))
+    #log("Received postback for user %d and page %d with payload '%s' ", sender_id, recipient_id, payload)
 
     # When a postback is called, we'll send a message back to the sender to let them know it was successful
     send_message(sender_id, "Postback called")
