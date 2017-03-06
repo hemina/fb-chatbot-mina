@@ -69,9 +69,8 @@ def webhook():
                     pass
 
                 if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
-                    print "postback", messaging_event
-
-
+                    #print "postback", messaging_event
+                    received_postback(messaging_event)
 
     return "ok", 200
 
@@ -170,6 +169,20 @@ def send_template_message(recipient_id, message_text):
         log(r.status_code)
         log(r.text)
 
+def received_postback(messaging_event) {
+    sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
+    recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
+
+    // The 'payload' param is a developer-defined field which is set in a postback 
+    // button for Structured Messages. 
+    payload = messaging_event["postback"]["payload"] 
+
+    log("Received postback for user %d and page %d with payload '%s' ", sender_id, recipient_id, payload);
+
+    // When a postback is called, we'll send a message back to the sender to 
+    // let them know it was successful
+    send_message(sender_id, "Postback called");
+}
 
 
 def log(message):  # simple wrapper for logging to stdout on heroku
