@@ -9,6 +9,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
+graph_url = 'https://graph.facebook.com/v2.6'
 
 @app.route('/', methods=['GET'])
 def verify():
@@ -58,9 +59,11 @@ def webhook():
                     bot_response = kernel.respond(message_text)
                     keywords = re.sub(' ', '+', message_text)
                     url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords 
-                    bot_response += " Maybe you can try this link: "+ url
+                    user_info = get_user_info(recipient_id)
+                    bot_response += " Maybe you can try this link: "+ url + " " + user_info
 
-                    send_template_message(sender_id, bot_response)
+
+                    send_message(sender_id, bot_response)
 
                 if messaging_event.get("delivery"):  # delivery confirmation
                     pass
@@ -128,8 +131,8 @@ def send_template_message(recipient_id, message_text):
               "title": "Open Web URL"
             }, {
               "type": "postback",
-              "title": "Call Postback",
-              "payload": "Payload for first bubble",
+              "title": "English",
+              "payload": "English",
             }],
           }, {
             "title": "touch",
@@ -181,6 +184,25 @@ def received_postback(messaging_event):
 
     # When a postback is called, we'll send a message back to the sender to let them know it was successful
     send_message(sender_id, payload)
+
+def get_user_info(recipient_id, fields=None):
+    """Getting information about the user
+    https://developers.facebook.com/docs/messenger-platform/user-profile
+    Input:
+      recipient_id: recipient id to send to
+    Output:
+      Response from API as <dict>
+    """
+    params = {
+        "access_token": os.environ["PAGE_ACCESS_TOKEN"]
+    }
+
+    request_endpoint = '{0}/{1}'.format(graph_url, recipient_id)
+    response = requests.get(request_endpoint, params=params)
+    if response.status_code == 200:
+        return response.json()
+
+    return None
 
 
 def log(message):  # simple wrapper for logging to stdout on heroku
