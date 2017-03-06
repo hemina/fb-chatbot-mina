@@ -185,7 +185,7 @@ def received_postback(messaging_event):
     # When a postback is called, we'll send a message back to the sender to let them know it was successful
     send_message(sender_id, payload)
 
-def get_user_info(recipient_id, fields=None):
+def get_user_info(sender_id, fields=None):
     """Getting information about the user
     https://developers.facebook.com/docs/messenger-platform/user-profile
     Input:
@@ -197,7 +197,7 @@ def get_user_info(recipient_id, fields=None):
         "access_token": os.environ["PAGE_ACCESS_TOKEN"]
     }
 
-    request_endpoint = '{0}/{1}'.format(graph_url, recipient_id)
+    request_endpoint = '{0}/{1}'.format(graph_url, sender_id)
     response = requests.get(request_endpoint, params=params)
     if response.status_code == 200:
         return response.json()
