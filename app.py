@@ -14,6 +14,7 @@ graph_url = 'https://graph.facebook.com/v2.6'
 # os.environ["PAGE_ACCESS_TOKEN"] = "EAAXIHwFxIAQBAEXFbnln6tcgpo8NaG4YMckwhi2DpDywLiqLephYcN9lnNo1IgZA7vR68W8ytoo8YpkOop5FY2XqI7nn2DM1Yj8t9frcd7sEuFrgAbaRgkFZBYnkeUb0ZC6fR9pRjA129g0sMaSsnDYuk6GvoN0kTHW6U3MZCAZDZD"
 counter = 0
 
+
 @app.route('/', methods=['GET'])
 def verify():
     # when the endpoint is registered as a webhook, it must echo back
