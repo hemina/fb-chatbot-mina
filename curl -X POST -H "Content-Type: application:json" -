@@ -1,0 +1,80 @@
+curl -X POST -H "Content-Type: application/json" -d '{
+  "setting_type" : "call_to_actions",
+  "thread_state" : "existing_thread",
+  "call_to_actions":[
+
+    {
+      "type":"postback",
+      "title":"Look for a fund",
+      "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_START_ORDER"
+    },
+    {
+      "type":"web_url",
+      "title":"View Website",
+      "url":"http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet"
+      "webview_height_ratio": "full",
+      "messenger_extensions": true
+    },
+    {
+      "type":"web_url",
+      "title":"Download Investo",
+      "url":"http://investo.bnpparibas/",
+
+    }
+  ]
+}' "https://graph.facebook.com/v2.6/me/thread_settings?access_token=EAAXIHwFxIAQBAEXFbnln6tcgpo8NaG4YMckwhi2DpDywLiqLephYcN9lnNo1IgZA7vR68W8ytoo8YpkOop5FY2XqI7nn2DM1Yj8t9frcd7sEuFrgAbaRgkFZBYnkeUb0ZC6fR9pRjA129g0sMaSsnDYuk6GvoN0kTHW6U3MZCAZDZD"    
+
+
+curl -X POST -H "Content-Type: application/json" -d '{
+  "setting_type":"call_to_actions",
+  "thread_state":"new_thread",
+  "call_to_actions":[
+    {
+      "payload":{
+            "template_type":"generic",
+            "elements": [{
+            "title": "BNP Paribas Investment Partners",
+            #"subtitle": "Next-generation virtual reality",
+            "item_url": "http://www.bnpparibas-ip.fr",               
+            #"image_url": "./img/bnpip.jpg",
+            "buttons": [{
+              "type": "web_url",
+              "url": "http://www.bnpparibas-ip.fr",
+              "title": "Website in French"
+            }, {
+              "type": "web_url",
+              "url": "http://www.bnpparibas-ip.com/en/",
+              "title": "Website in English",
+            }],
+          }, {
+            "title": "Investo",
+            "item_url": "http://investo.bnpparibas/",               
+            #"image_url": "https://www.google.fr/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjbsZO-tMLSAhWJuBQKHQSADPgQjRwIBw&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Fapp%2Finvesto-par-bnp-paribas%2Fid1189529445%3Fmt%3D8&psig=AFQjCNHkkFs7ZrfJGrDcKqVwNaDesChYyw&ust=1488907950510928",
+            "buttons": [{
+              "type": "web_url",
+              "url": "http://investo.bnpparibas/",
+              "title": "Open Web URL"
+            }, {
+              "type": "postback",
+              "title": "Call Postback",
+              "payload": "Payload for second bubble",
+            }]
+            # "text":message_text,
+            # "buttons":[
+            # {
+            #     "type":"web_url",
+            #     "url":"http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet",
+            #     "title":"Show fundsheet Website"
+            # },
+            # {
+            # "type":"postback",
+            # "title":"English",
+            # "payload":"English"
+            # }
+            # ]
+            }
+            ]
+            }
+    }
+  ]
+}' "https://graph.facebook.com/v2.6/me/thread_settings?access_token=EAAXIHwFxIAQBAEXFbnln6tcgpo8NaG4YMckwhi2DpDywLiqLephYcN9lnNo1IgZA7vR68W8ytoo8YpkOop5FY2XqI7nn2DM1Yj8t9frcd7sEuFrgAbaRgkFZBYnkeUb0ZC6fR9pRjA129g0sMaSsnDYuk6GvoN0kTHW6U3MZCAZDZD"      

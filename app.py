@@ -12,6 +12,7 @@ app = Flask(__name__)
 graph_url = 'https://graph.facebook.com/v2.6'
 os.environ["VERIFY_TOKEN"] = "Mina"
 os.environ["PAGE_ACCESS_TOKEN"] = "EAAXIHwFxIAQBAEXFbnln6tcgpo8NaG4YMckwhi2DpDywLiqLephYcN9lnNo1IgZA7vR68W8ytoo8YpkOop5FY2XqI7nn2DM1Yj8t9frcd7sEuFrgAbaRgkFZBYnkeUb0ZC6fR9pRjA129g0sMaSsnDYuk6GvoN0kTHW6U3MZCAZDZD"
+# counter = 0
 
 @app.route('/', methods=['GET'])
 def verify():
@@ -19,6 +20,8 @@ def verify():
     # the 'hub.challenge' value it receives in the query arguments
     
     if request.args.get("hub.mode") == "subscribe" and request.args.get("hub.challenge"):
+        global counter
+        counter = 0
         # if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
         #     return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
@@ -29,14 +32,12 @@ def verify():
 
 @app.route('/', methods=['POST'])
 def webhook():
-
+    
     # endpoint for processing incoming messaging events
-
+    global counter
     data = request.get_json()
     log(data)  # you may not want to log every incoming message in production, but it's good for testing
-
     if data["object"] == "page":
-
         for entry in data["entry"]:
             for messaging_event in entry["messaging"]:
 
@@ -59,24 +60,34 @@ def webhook():
                         kernel.bootstrap(learnFiles = os.path.abspath("aiml/std-startup.xml", commands = "load aiml b"))#, commands = "load aiml b"
                         kernel.saveBrain("bot_brain.brn")
 
+                    if counter == 0:
+                        user_info = get_user_info(sender_id)
+                        if user_info:
+                            username = user_info['first_name']
+                            language = user_info['locale']
+
+                    # kernel now ready for use
+                            bot_response = "Hi "+username+", nice to meet you!"
+                            counter += 1
+                            log("counter = {counte}".format(counte=counter))
+                        send_template_message(sender_id, bot_response)
+                    
+                    bot_response = kernel.respond(message_text)
+                    keywords = re.sub(' ', '+', message_text)
+                    url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords 
+
+                    bot_response += " Maybe you can try this link: "+ url 
+                    send_message(sender_id, bot_response)
+                    
+
+                if messaging_event.get("delivery"):  # delivery confirmation
+                    sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
                     user_info = get_user_info(sender_id)
                     if user_info:
                         username = user_info['first_name']
                         language = user_info['locale']
-
-
-                    # kernel now ready for use
-                    bot_response = "Hi "+username+", nice to meet you!"
-                    #bot_response = kernel.respond(message_text)
-                    # keywords = re.sub(' ', '+', message_text)
-                    # url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords 
-
-                    # bot_response += " Maybe you can try this link: "+ url + " " + str(user_info)
-                    send_message(sender_id, bot_response)
-                    send_template_message(sender_id, bot_response)
-
-                if messaging_event.get("delivery"):  # delivery confirmation
-                    pass
+                        bot_response = "Hi "+username+", nice to meet you!"
+                    send_template_message(sender_id, " ")
 
                 if messaging_event.get("optin"):  # optin confirmation
                     pass
@@ -131,33 +142,32 @@ def send_template_message(recipient_id, message_text):
             "payload":{
             "template_type":"generic",
             "elements": [{
-            "title": "Investo",
+            "title": "BNP Paribas Investment Partners",
             #"subtitle": "Next-generation virtual reality",
             "item_url": "http://www.bnpparibas-ip.fr",               
-            "image_url": "http://messengerdemo.parseapp.com/img/rift.png",
+            #"image_url": "./img/bnpip.jpg",
             "buttons": [{
               "type": "web_url",
               "url": "http://www.bnpparibas-ip.fr",
-              "title": "View Our Website"
+              "title": "Website in French"
             }, {
-              "type": "postback",
-              "title": "English",
-              "payload": "English",
+              "type": "web_url",
+              "url": "http://www.bnpparibas-ip.com/en/",
+              "title": "Website in English",
             }],
           }, {
-            "title": "touch",
-            "subtitle": "Your Hands, Now in VR",
-            "item_url": "https://www.oculus.com/en-us/touch/",               
-            "image_url": "http://messengerdemo.parseapp.com/img/touch.png",
+            "title": "Investo",
+            "item_url": "http://investo.bnpparibas/",               
+            #"image_url": "https://www.google.fr/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjbsZO-tMLSAhWJuBQKHQSADPgQjRwIBw&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Fapp%2Finvesto-par-bnp-paribas%2Fid1189529445%3Fmt%3D8&psig=AFQjCNHkkFs7ZrfJGrDcKqVwNaDesChYyw&ust=1488907950510928",
             "buttons": [{
               "type": "web_url",
-              "url": "https://www.oculus.com/en-us/touch/",
-              "title": "Open Web URL"
-            }, {
-              "type": "postback",
-              "title": "Call Postback",
-              "payload": "Payload for second bubble",
-            }]
+              "url": "http://investo.bnpparibas/",
+              "title": "Download Investo"
+            # }, {
+            #   "type": "postback",
+            #   "title": "Call Postback",
+            #   "payload": "Payload for second bubble",
+            # }]
             # "text":message_text,
             # "buttons":[
             # {
@@ -169,8 +179,8 @@ def send_template_message(recipient_id, message_text):
             # "type":"postback",
             # "title":"English",
             # "payload":"English"
-            # }
-            # ]
+            }
+            ]
             }
             ]
             }
@@ -221,4 +231,5 @@ def log(message):  # simple wrapper for logging to stdout on heroku
 
 
 if __name__ == '__main__':
+    counter = 0
     app.run(debug=True)
