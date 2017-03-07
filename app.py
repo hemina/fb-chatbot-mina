@@ -10,8 +10,8 @@ from flask import Flask, request
 app = Flask(__name__)
 
 graph_url = 'https://graph.facebook.com/v2.6'
-os.environ["VERIFY_TOKEN"] = "Mina"
-os.environ["PAGE_ACCESS_TOKEN"] = "EAAXIHwFxIAQBAEXFbnln6tcgpo8NaG4YMckwhi2DpDywLiqLephYcN9lnNo1IgZA7vR68W8ytoo8YpkOop5FY2XqI7nn2DM1Yj8t9frcd7sEuFrgAbaRgkFZBYnkeUb0ZC6fR9pRjA129g0sMaSsnDYuk6GvoN0kTHW6U3MZCAZDZD"
+# os.environ["VERIFY_TOKEN"] = "Mina"
+# os.environ["PAGE_ACCESS_TOKEN"] = "EAAXIHwFxIAQBAEXFbnln6tcgpo8NaG4YMckwhi2DpDywLiqLephYcN9lnNo1IgZA7vR68W8ytoo8YpkOop5FY2XqI7nn2DM1Yj8t9frcd7sEuFrgAbaRgkFZBYnkeUb0ZC6fR9pRjA129g0sMaSsnDYuk6GvoN0kTHW6U3MZCAZDZD"
 # counter = 0
 
 @app.route('/', methods=['GET'])
@@ -22,8 +22,8 @@ def verify():
     if request.args.get("hub.mode") == "subscribe" and request.args.get("hub.challenge"):
         global counter
         counter = 0
-        # if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
-        #     return "Verification token mismatch", 403
+        if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
+            return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
 
     return "Hello world", 200
