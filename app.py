@@ -53,6 +53,13 @@ def webhook():
                         message_text = "smile"
 
                     kernel = aiml.Kernel()
+
+
+                    if os.path.isfile("bot_brain.brn"):
+                        kernel.bootstrap(brainFile = "bot_brain.brn")
+                    else:
+                        kernel.bootstrap(learnFiles = os.path.abspath("aiml/std-startup.xml"))#, commands = "load aiml b"
+                        
                     kernel.setBotPredicate("name", "Pikachu")
                     kernel.setBotPredicate('master', 'Mina')
                     kernel.setBotPredicate("age","0")
@@ -100,11 +107,7 @@ def webhook():
                     kernel.setBotPredicate("question","Which funds would you want to invest in?")
                     kernel.setBotPredicate("website","http://www.bnpparibas-ip.com/en/")
 
-                    if os.path.isfile("bot_brain.brn"):
-                        kernel.bootstrap(brainFile = "bot_brain.brn")
-                    else:
-                        kernel.bootstrap(learnFiles = os.path.abspath("aiml/std-startup.xml", commands = "load aiml b"))#, commands = "load aiml b"
-                        kernel.saveBrain("bot_brain.brn")
+                    kernel.saveBrain("bot_brain.brn")
 
                     if counter == 0:
                         user_info = get_user_info(sender_id)
