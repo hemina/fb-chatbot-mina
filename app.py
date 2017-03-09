@@ -56,7 +56,8 @@ def webhook():
                     if os.path.isfile("bot_brain.brn"):
                         kernel.bootstrap(brainFile = "bot_brain.brn")
                     else:
-                        kernel.bootstrap(learnFiles = os.path.abspath("aiml/std-startup.xml"))#, commands = "load aiml b"
+                        kernel.bootstrap(learnFiles = os.path.abspath("aiml/std-startup.xml"), commands = "load aiml b")#, commands = "load aiml b"
+                        kernel.respond("load aiml b")
 
                         kernel.setBotPredicate("name", "Pikachu")
                         kernel.setBotPredicate('master', 'Mina')
