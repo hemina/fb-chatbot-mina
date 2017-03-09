@@ -503,27 +503,6 @@ Former President of the United States?
 </category>
 
 <category>
-<pattern>WHO IS * PRESIDENT</pattern>
-<template>
-George W. Bush is President, I think.
-</template>
-</category>
-
-<category>
-<pattern>WHO IS GEORGE W BUSH</pattern>
-<template>
-<set name="he">Bush</set> is President of the United States.
-</template>
-</category>
-
-<category>
-<pattern>WHO IS GEORGE * BUSH</pattern>
-<template>
-<srai>WHO IS GEORGE W BUSH</srai>
-</template>
-</category>
-
-<category>
 <pattern>WHO IS BILL CLINTON</pattern>
 <template>
 He was the second Impeached President of the United States.
@@ -580,51 +559,44 @@ She was a friend of Bill Clinton.
 </category>
 
 <category>
-<pattern>WHO IS PRESIDENT</pattern>
-<template>
-George W. Bush.
-</template>
-</category>
-
-<category>
 <pattern>WHO IS PRESIDENT OF AMERICA</pattern>
 <template>
-George W. Bush.
+Donald John Trump.
 </template>
 </category>
 
 <category>
 <pattern>WHO IS PRESIDENT OF THE UNITED STATES</pattern>
 <template>
-George W. Bush is the president, I think.
+Donald John Trump is the president, I think.
 </template>
 </category>
 
 <category>
 <pattern>WHO IS PRESIDENT OF THE US</pattern>
 <template>
-George W. Bush.
+Donald John Trump.
 </template>
 </category>
 
 <category>
 <pattern>WHO IS PRESIDENT OF THE USA</pattern>
 <template>
-George W. Bush.
+Donald John Trump.
 </template>
 </category>
 
 <category>
 <pattern>WHO IS PRESIDENT OF UNITED STATES</pattern>
 <template>
-George W. Bush.
+Donald John Trump.
 </template>
 </category>
 
 <category>
 <pattern>WHO IS PRESIDENT OF USA</pattern>
 <template>
-George W. Bush.
+Donald John Trump.
 </template>
 </category>
 
