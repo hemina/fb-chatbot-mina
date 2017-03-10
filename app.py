@@ -233,7 +233,7 @@ def webhook():
                     with open ('dict_url', 'rb') as fp:
                         dict_url = pickle.load(fp)  
                         
-                    bot_response = respond(sessionId, message_text, kernel, name_list_str, isin_list_str, dict_url)
+                    bot_response = respond(sender_id, message_text, kernel, name_list_str, isin_list_str, dict_url)
                     send_message(sender_id, bot_response)
                     
 
