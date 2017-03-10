@@ -197,14 +197,13 @@ def webhook():
                         message_text = "smile"
 
                     kernel = aiml.Kernel()
+                    setParam(kernel)
 
                     if os.path.isfile("bot_brain.brn"):
                         kernel.bootstrap(brainFile = "bot_brain.brn")
                     else:
                         kernel.bootstrap(learnFiles = os.path.abspath("aiml/std-startup.xml"), commands = "load aiml b")
-                        kernel.respond("load aiml b")
-
-                        setParam(kernel)
+                        kernel.respond("load aiml b")                       
 
                         kernel.saveBrain("bot_brain.brn")
 
