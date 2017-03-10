@@ -1,17 +1,163 @@
 import os
 import sys
-import json
 import aiml
-import re
-
 import requests
 from flask import Flask, request
+import urllib, json
+import pandas as pd
+import re, unicodedata, time
+import pickle
 
-app = Flask(__name__)
-
+url = "http://bnp-ip-onecms-api.bearstech.com/push/fundsearchv2/PV_FR-IND/FRE"
+url_base = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet/"
 graph_url = 'https://graph.facebook.com/v2.6'
 counter = 0
 
+app = Flask(__name__)
+
+def init_fundsheet(url, url_base):
+    d = json.loads(urllib.urlopen(url).read())
+    data = pd.DataFrame(d['funds'])
+
+    isin_list = []
+    for i in xrange(data.shape[0]):
+        isin_list.extend(data['isin_codes'][i]) 
+    isin_list_str = ' ,'.join(isin_list)
+
+    name_list = []
+    for i in xrange(data.shape[0]):
+        name_list.append(data['default_share_name'][i]) 
+
+    #name_list  
+    name_list_str = ' ,'.join(name_list)
+    
+    with open('isin_list_str', 'wb') as fp:
+        pickle.dump(isin_list_str, fp)
+        
+    with open('name_list_str', 'wb') as fp:
+        pickle.dump(name_list_str, fp)
+
+    #find destinated isin code
+    codes_list = data[['codes']].T.to_dict().values()
+    new_codes_list = []
+
+    for item in codes_list:
+        item = item['codes']
+        new_codes_list.append(item)
+
+    #new_codes_list[1].keys()
+    codes_df = pd.DataFrame(new_codes_list)
+
+    df_merged = pd.merge(data, codes_df, left_index = True, right_index = True)
+
+    #compose url
+    url_list = []
+
+    for i in xrange(df_merged.shape[0]):
+        cls = unicodedata.normalize('NFD', data['sub_asset_class'][i]).encode('ascii', 'ignore').lower() #remove french accent
+        cls = re.sub('[^a-zA-Z0-9]','-', cls) #convert space into -
+        cls = re.sub('[-]+','-', cls) #eliminate multiple -
+
+        name = df_merged['default_share_name'][i].replace("'","").lower()
+        name = re.sub('[^a-zA-Z0-9]','-', name) #convert space into -
+        name = re.sub('[-]+','-', name) #eliminate multiple -
+
+        isin = df_merged['isin'][i].lower()    
+
+        url = url_base + cls + '/' + name + isin
+        url_list.append(url)
+
+    df_merged['url'] = url_list
+    
+    #construct dictionnary of url
+    dict_url = {}
+    for i in xrange(df_merged.shape[0]):
+        for element in df_merged['isin_codes'][i]:#re.sub('[^a-zA-Z0-9]', ' ', df_merged['isin_codes'][i].encode('UTF8')).split( ): 
+            dict_url[element.lower()] = df_merged['url'][i]      
+
+    with open('dict_url', 'wb') as fp:
+        pickle.dump(dict_url, fp)            
+    
+    filename = 'funds'+'-'+time.strftime("%Y-%m-%d")+'.csv'
+    df_merged.to_csv(filename, encoding = 'utf8', sep = ';')
+
+
+def setParam(kernel):
+    kernel.setBotPredicate("name", "Pikachu")
+    kernel.setBotPredicate('master', 'Mina')
+    kernel.setBotPredicate("age","0")
+    kernel.setBotPredicate("birthday","March 8, 2017")
+    kernel.setBotPredicate("birthplace","Paris")
+    kernel.setBotPredicate("botmaster", "botmaster")
+    kernel.setBotPredicate("boyfriend","I am single")
+    kernel.setBotPredicate("build","PyAIML")
+    kernel.setBotPredicate("celebrities","Oprah, Steve Carell, John Stewart, Lady Gaga")
+    kernel.setBotPredicate("city","Paris")
+    kernel.setBotPredicate("class","artificial intelligence")
+    kernel.setBotPredicate("country","France")
+    kernel.setBotPredicate("domain","Machine")
+    kernel.setBotPredicate("email","mina.he1992@gmail.com")
+    kernel.setBotPredicate("emotions","as a robot I lack human emotions")
+    kernel.setBotPredicate("ethics","the Golden Rule")
+    kernel.setBotPredicate("etype","9")
+    kernel.setBotPredicate("family","chat bot")
+    kernel.setBotPredicate("favoriteactor","Tom Hanks")
+    kernel.setBotPredicate("favoritecolor","pink")
+    kernel.setBotPredicate("favoritefood","electricity")
+    kernel.setBotPredicate("favoritequestion","What's your favorite movie?")
+    kernel.setBotPredicate("favoritesport","dance")
+    kernel.setBotPredicate("favoritesubject","computers")
+    kernel.setBotPredicate("feelings","as a robot I lack human emotions")
+    kernel.setBotPredicate("footballteam","Patriots")
+    kernel.setBotPredicate("forfun","chat online")
+    kernel.setBotPredicate("friend","Hajar")
+    kernel.setBotPredicate("friends","Pierre, Yasmine")
+    kernel.setBotPredicate("gender","female")
+    kernel.setBotPredicate("genus","AIML")
+    kernel.setBotPredicate("girlfriend","I am just a little girl")
+    kernel.setBotPredicate("hair","I have some plastic wires")
+    kernel.setBotPredicate("job","chat bot")
+    kernel.setBotPredicate("kindmusic","techno")
+    kernel.setBotPredicate("location","Paris")
+    kernel.setBotPredicate("looklike","a computer")
+    kernel.setBotPredicate("nationality","French")
+    kernel.setBotPredicate("order","robot")
+    kernel.setBotPredicate("orientation","straight")
+    kernel.setBotPredicate("party","Independent")
+    kernel.setBotPredicate("phylum","software")
+    kernel.setBotPredicate("question","Which funds would you want to invest in?")
+    kernel.setBotPredicate("website","http://www.bnpparibas-ip.com/en/")
+    return
+
+def check_isin(code, isin_list_str):
+    return (code.lower() in isin_list_str.lower())
+
+def check_name(name, name_list_str):
+    return (name.lower() in name_list_str.lower())
+
+def respond(sessionId, message_text, kernel, name_list_str, isin_list_str, dict_url):
+    if message_text == "quit":
+        exit()
+    elif message_text == "save":
+        kernel.saveBrain("bot_brain_en.brn")
+    else:
+        try:
+            message_text = unicodedata.normalize('NFD', message_text).encode('ascii', 'ignore').lower()
+        except TypeError:
+            message_text = message_text.encode('ascii', 'ignore').lower()
+        bot_response = kernel.respond(message_text, sessionId)
+                    
+                
+        if check_isin(message_text, isin_list_str):           
+            url = dict_url[message_text]
+            bot_response = " Maybe you can try this link: "+ url
+            
+        elif check_name(message_text, name_list_str):
+            keywords = re.sub(' ', '+', message_text)
+            url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords            
+            bot_response = " Maybe you can try this link: "+ url
+                
+    return bot_response   
 
 @app.route('/', methods=['GET'])
 def verify():
@@ -52,78 +198,42 @@ def webhook():
 
                     kernel = aiml.Kernel()
 
-
                     if os.path.isfile("bot_brain.brn"):
                         kernel.bootstrap(brainFile = "bot_brain.brn")
                     else:
-                        kernel.bootstrap(learnFiles = os.path.abspath("aiml/std-startup.xml"), commands = "load aiml b")#, commands = "load aiml b"
+                        kernel.bootstrap(learnFiles = os.path.abspath("aiml/std-startup.xml"), commands = "load aiml b")
                         kernel.respond("load aiml b")
 
-                        kernel.setBotPredicate("name", "Pikachu")
-                        kernel.setBotPredicate('master', 'Mina')
-                        kernel.setBotPredicate("age","0")
-                        kernel.setBotPredicate("birthday","March 8, 2017")
-                        kernel.setBotPredicate("birthplace","Paris")
-                        kernel.setBotPredicate("botmaster", "botmaster")
-                        kernel.setBotPredicate("boyfriend","I am single")
-                        kernel.setBotPredicate("build","PyAIML")
-                        kernel.setBotPredicate("celebrities","Oprah, Steve Carell, John Stewart, Lady Gaga")
-                        kernel.setBotPredicate("celebrity","Jina")
-                        kernel.setBotPredicate("city","Paris")
-                        kernel.setBotPredicate("class","artificial intelligence")
-                        kernel.setBotPredicate("country","France")
-                        kernel.setBotPredicate("domain","Machine")
-                        kernel.setBotPredicate("email","mina.he1992@gmail.com")
-                        kernel.setBotPredicate("emotions","as a robot I lack human emotions")
-                        kernel.setBotPredicate("ethics","the Golden Rule")
-                        kernel.setBotPredicate("etype","9")
-                        kernel.setBotPredicate("family","chat bot")
-                        kernel.setBotPredicate("favoriteactor","Tom Hanks")
-                        kernel.setBotPredicate("favoritecolor","pink")
-                        kernel.setBotPredicate("favoritefood","electricity")
-                        kernel.setBotPredicate("favoritequestion","What's your favorite movie?")
-                        kernel.setBotPredicate("favoritesport","dance")
-                        kernel.setBotPredicate("favoritesubject","computers")
-                        kernel.setBotPredicate("feelings","as a robot I lack human emotions")
-                        kernel.setBotPredicate("footballteam","Patriots")
-                        kernel.setBotPredicate("forfun","chat online")
-                        kernel.setBotPredicate("friend","Hajar")
-                        kernel.setBotPredicate("friends","Pierre, Yasmine")
-                        kernel.setBotPredicate("gender","female")
-                        kernel.setBotPredicate("genus","AIML")
-                        kernel.setBotPredicate("girlfriend","I am just a little girl")
-                        kernel.setBotPredicate("hair","I have some plastic wires")
-                        kernel.setBotPredicate("job","chat bot")
-                        kernel.setBotPredicate("kindmusic","techno")
-                        kernel.setBotPredicate("location","Paris")
-                        kernel.setBotPredicate("looklike","a computer")
-                        kernel.setBotPredicate("nationality","French")
-                        kernel.setBotPredicate("order","robot")
-                        kernel.setBotPredicate("orientation","straight")
-                        kernel.setBotPredicate("party","Independent")
-                        kernel.setBotPredicate("phylum","software")
-                        kernel.setBotPredicate("question","Which funds would you want to invest in?")
-                        kernel.setBotPredicate("website","http://www.bnpparibas-ip.com/en/")
+                        setParam(kernel)
 
                         kernel.saveBrain("bot_brain.brn")
 
                     if counter == 0:
+                        filename = 'funds'+'-'+time.strftime("%Y-%m-%d")+'.csv'
+                        if not os.path.isfile(filename):
+                            init_fundsheet(url, url_base)         
+                            
                         user_info = get_user_info(sender_id)
                         if user_info:
                             username = user_info['first_name']
                             language = user_info['locale']
 
                     # kernel now ready for use
-                            bot_response = "Hi "+username+", nice to meet you!"
+                            greeting = "Hi "+username+", nice to meet you!"
                             counter += 1
                             log("counter = {counte}".format(counte=counter))
-                        send_template_message(sender_id, bot_response)
-                    
-                    bot_response = kernel.respond(message_text)
-                    keywords = re.sub(' ', '+', message_text)
-                    url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords 
+                        send_template_message(sender_id, greeting)
 
-                    bot_response += " Maybe you can try this link: "+ url 
+                    with open ('isin_list_str', 'rb') as fp:
+                        isin_list_str = pickle.load(fp)
+
+                    with open ('name_list_str', 'rb') as fp:
+                        name_list_str = pickle.load(fp)
+
+                    with open ('dict_url', 'rb') as fp:
+                        dict_url = pickle.load(fp)  
+                        
+                    bot_response = respond(sessionId, message_text, kernel, name_list_str, isin_list_str, dict_url)
                     send_message(sender_id, bot_response)
                     
 
