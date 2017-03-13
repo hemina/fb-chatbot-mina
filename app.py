@@ -11,7 +11,7 @@ import pickle
 url = "http://bnp-ip-onecms-api.bearstech.com/push/fundsearchv2/PV_FR-IND/FRE"
 url_base = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet/"
 graph_url = 'https://graph.facebook.com/v2.6'
-#counter = 0
+counter = 0
 
 app = Flask(__name__)
 
@@ -389,5 +389,5 @@ def log(message):  # simple wrapper for logging to stdout on heroku
 
 
 if __name__ == '__main__':
-    counter = 0
+    #counter = 0
     app.run(debug=True)
