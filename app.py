@@ -14,6 +14,7 @@ graph_url = 'https://graph.facebook.com/v2.6'
 counter = 0
 
 os.environ["PAGE_ACCESS_TOKEN"] = "EAAXIHwFxIAQBAKYzlZCF6lChaURccWzYumbzrll4pjfkPBb0ZClhJtoesU5ROG56Ih21Ccsmf9MAWHJGL758I6RXkMPPAfK5dfQtDxY8sPQNjSDOw9EZBwHSPyIws7OADJvKyVFWEBtZButrhkyuIhJjE18SaxXnRWncEyQNLAZDZD"
+os.environ["VERIFY_TOKEN"] = "Mina"
 
 app = Flask(__name__)
 
@@ -148,18 +149,16 @@ def respond(sessionId, message_text, kernel, name_list_str, dict_url):
                     
                 
         if check_isin(message_text, dict_url.keys()):   
-            try:        
-                url = dict_url[message_text]
-                bot_response = " Maybe you can try this link: "+ url
-            except:
-                bot_response = " "
+            url = dict_url[message_text]
+            bot_response = " Maybe you can try this link: "+ url
+
             
         elif check_name(message_text, name_list_str):
             keywords = re.sub(' ', '+', message_text)
             url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords            
             bot_response = " Maybe you can try this link: "+ url
 
-        print kernel.getPredicate("name", sessionId)
+        #print kernel.getPredicate("name", sessionId)
                 
     return bot_response   
 
