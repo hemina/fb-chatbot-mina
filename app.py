@@ -24,7 +24,6 @@ def init_fundsheet(url, url_base):
     isin_list = []
     for i in xrange(data.shape[0]):
         isin_list.extend(data['isin_codes'][i]) 
-    isin_list_str = isin_list #' ,'.join(isin_list)
 
     name_list = []
     for i in xrange(data.shape[0]):
@@ -32,9 +31,6 @@ def init_fundsheet(url, url_base):
 
     #name_list  
     name_list_str = ' ,'.join(name_list)
-    
-    with open('isin_list_str', 'wb') as fp:
-        pickle.dump(isin_list_str, fp)
         
     with open('name_list_str', 'wb') as fp:
         pickle.dump(name_list_str, fp)
@@ -138,7 +134,7 @@ def check_name(name, name_list_str):
     return (name.lower() in name_list_str.lower())
 
 #if message_text contains isin or fund's name, return corresponding url, otherwise return the kernel's text response
-def respond(sessionId, message_text, kernel, name_list_str, isin_list_str, dict_url):
+def respond(sessionId, message_text, kernel, name_list_str, dict_url):
     if message_text == "quit":
         exit()
     elif message_text == "save":
@@ -234,16 +230,13 @@ def webhook():
                     counter += 1
                     log("counter = {counte}".format(counte=counter))
 
-                    with open ('isin_list_str', 'rb') as fp:
-                        isin_list_str = pickle.load(fp)
-
                     with open ('name_list_str', 'rb') as fp:
                         name_list_str = pickle.load(fp)
 
                     with open ('dict_url', 'rb') as fp:
                         dict_url = pickle.load(fp)  
                         
-                    bot_response = respond(sender_id, message_text, kernel, name_list_str, isin_list_str, dict_url)
+                    bot_response = respond(sender_id, message_text, kernel, name_list_str, dict_url)
                     send_message(sender_id, bot_response)
                     
 
