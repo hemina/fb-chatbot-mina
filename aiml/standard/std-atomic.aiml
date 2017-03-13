@@ -12458,13 +12458,6 @@ Tell me more about your mother.
 </category>
 
 <category>
-<pattern>MY NAME IS</pattern>
-<template>
-...
-</template>
-</category>
-
-<category>
 <pattern>MY NAME IS WHAT</pattern>
 <template>
 You are <get name="name"/>, seeker.
@@ -18033,7 +18026,6 @@ You said it was <get name="favmovie"/>.
 <category>
 <pattern>WHAT IS MY GENDER</pattern>
 <template>
-Mostly only women use words like "gender".
 <br />You are a <get name="gender"/>.
 </template>
 </category>
@@ -18652,7 +18644,7 @@ My programming is in Java.
 <category>
 <pattern>WHAT IS YOUR NAME AGAIN</pattern>
 <template>
-My name is <bot name="name"/>.  What is your name?
+My name is <bot name="name"/>. 
 </template>
 </category>
 
