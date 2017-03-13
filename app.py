@@ -14,7 +14,6 @@ graph_url = 'https://graph.facebook.com/v2.6'
 counter = 0
 
 os.environ["PAGE_ACCESS_TOKEN"] = "EAAXIHwFxIAQBAKYzlZCF6lChaURccWzYumbzrll4pjfkPBb0ZClhJtoesU5ROG56Ih21Ccsmf9MAWHJGL758I6RXkMPPAfK5dfQtDxY8sPQNjSDOw9EZBwHSPyIws7OADJvKyVFWEBtZButrhkyuIhJjE18SaxXnRWncEyQNLAZDZD"
-os.environ["VERIFY_TOKEN"] = "Mina"
 
 app = Flask(__name__)
 
@@ -25,6 +24,7 @@ def init_fundsheet(url, url_base):
     isin_list = []
     for i in xrange(data.shape[0]):
         isin_list.extend(data['isin_codes'][i]) 
+    isin_list_str = isin_list #' ,'.join(isin_list)
 
     name_list = []
     for i in xrange(data.shape[0]):
@@ -32,6 +32,9 @@ def init_fundsheet(url, url_base):
 
     #name_list  
     name_list_str = ' ,'.join(name_list)
+    
+    with open('isin_list_str', 'wb') as fp:
+        pickle.dump(isin_list_str, fp)
         
     with open('name_list_str', 'wb') as fp:
         pickle.dump(name_list_str, fp)
@@ -135,7 +138,7 @@ def check_name(name, name_list_str):
     return (name.lower() in name_list_str.lower())
 
 #if message_text contains isin or fund's name, return corresponding url, otherwise return the kernel's text response
-def respond(sessionId, message_text, kernel, name_list_str, dict_url):
+def respond(sessionId, message_text, kernel, name_list_str, isin_list_str, dict_url):
     if message_text == "quit":
         exit()
     elif message_text == "save":
@@ -149,16 +152,18 @@ def respond(sessionId, message_text, kernel, name_list_str, dict_url):
                     
                 
         if check_isin(message_text, dict_url.keys()):   
-            url = dict_url[message_text]
-            bot_response = " Maybe you can try this link: "+ url
-
+            try:        
+                url = dict_url[message_text]
+                bot_response = " Maybe you can try this link: "+ url
+            except:
+                bot_response = " "
             
         elif check_name(message_text, name_list_str):
             keywords = re.sub(' ', '+', message_text)
             url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords            
             bot_response = " Maybe you can try this link: "+ url
 
-        #print kernel.getPredicate("name", sessionId)
+        print kernel.getPredicate("name", sessionId)
                 
     return bot_response   
 
@@ -229,13 +234,16 @@ def webhook():
                     counter += 1
                     log("counter = {counte}".format(counte=counter))
 
+                    with open ('isin_list_str', 'rb') as fp:
+                        isin_list_str = pickle.load(fp)
+
                     with open ('name_list_str', 'rb') as fp:
                         name_list_str = pickle.load(fp)
 
                     with open ('dict_url', 'rb') as fp:
                         dict_url = pickle.load(fp)  
                         
-                    bot_response = respond(sender_id, message_text, kernel, name_list_str, dict_url)
+                    bot_response = respond(sender_id, message_text, kernel, name_list_str, isin_list_str, dict_url)
                     send_message(sender_id, bot_response)
                     
 
