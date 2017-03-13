@@ -371,7 +371,7 @@ def received_postback(messaging_event):
     #log("Received postback for user %d and page %d with payload '%s' ", sender_id, recipient_id, payload)
 
     # When a postback is called, we'll send a message back to the sender to let them know it was successful
-    send_message(sender_id, payload)
+    # send_message(sender_id, payload)
 
 def get_user_info(sender_id, fields=None):
     """Getting information about the user
