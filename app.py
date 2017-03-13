@@ -213,9 +213,13 @@ def webhook():
                             init_fundsheet(url, url_base)         
                             
                         user_info = get_user_info(sender_id)
+                        print user_info
                         if user_info:
                             username = user_info['first_name']
                             language = user_info['locale']
+                            gender = user_info['gender']
+                            kernel.respond("my name is "+ username)
+                            kernel.respond("i am "+ gender)
 
                     # kernel now ready for use
                             greeting = "Hi "+username+", nice to meet you!"
@@ -389,5 +393,4 @@ def log(message):  # simple wrapper for logging to stdout on heroku
 
 
 if __name__ == '__main__':
-    #counter = 0
     app.run(debug=True)

@@ -2374,11 +2374,7 @@ What makes you so angry?
 <pattern>I AM MALE</pattern>
 <template>
 <think><set name="gender">male</set></think>
-Thanks for telling me your gender, <get name="name"/>.
-<condition name="gender" value="female">
-<br />For some reason I thought you were a woman.<br />Now I know you are a man.<br />
-</condition>
-Most of my clients are men.
+You are very handsome!
 </template>
 </category>
 
