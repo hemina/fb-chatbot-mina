@@ -221,7 +221,8 @@ def webhook():
                             greeting = "Hi "+username+", nice to meet you!"
                             counter += 1
                             log("counter = {counte}".format(counte=counter))
-                        send_template_message(sender_id, greeting)
+                        send_message(sender_id, greeting)
+                        send_template_message(sender_id, " ")
 
                     with open ('isin_list_str', 'rb') as fp:
                         isin_list_str = pickle.load(fp)
