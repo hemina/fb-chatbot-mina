@@ -135,6 +135,7 @@ def check_isin(code, isin_list_str):
 def check_name(name, name_list_str):
     return (name.lower() in name_list_str.lower())
 
+#if message_text contains isin or fund's name, return corresponding url, otherwise return the kernel's text response
 def respond(sessionId, message_text, kernel, name_list_str, isin_list_str, dict_url):
     if message_text == "quit":
         exit()
@@ -213,14 +214,18 @@ def webhook():
                             init_fundsheet(url, url_base)         
                             
                         user_info = get_user_info(sender_id)
-                        print user_info
+                        #print user_info
                         if user_info:
                             username = user_info['first_name']
                             language = user_info['locale']
                             gender = user_info['gender']
+
                             name_text = "my name is "+ username + '.'
                             gender_text = "i am "+ gender + '.'
-                            message_text = name_text + gender_text + message_text
+
+                            kernel.respond(name_text) 
+                            kernel.respond(gender_text) 
+                            #message_text = name_text + gender_text + message_text
 
                     # kernel now ready for use
                         #     greeting = "Hi "+username+", nice to meet you!"
@@ -228,8 +233,8 @@ def webhook():
                         #     log("counter = {counte}".format(counte=counter))
                         # send_message(sender_id, greeting)
                         send_template_message(sender_id, " ")
-                        counter += 1
-                        log("counter = {counte}".format(counte=counter))
+                    counter += 1
+                    log("counter = {counte}".format(counte=counter))
 
                     with open ('isin_list_str', 'rb') as fp:
                         isin_list_str = pickle.load(fp)
