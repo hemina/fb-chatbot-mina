@@ -1883,10 +1883,7 @@ What is wrong, <get name="name"/>?
 <pattern>I AM FEMALE</pattern>
 <template>
 <think><set name="gender">female</set></think>
-Me too. I am a female robot.
-<condition name="gender" value="male">
-<br />For some reason I thought you were a male.
-</condition>
+You are very beautiful!
 </template>
 </category>
 

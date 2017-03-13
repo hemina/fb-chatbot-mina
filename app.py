@@ -218,15 +218,18 @@ def webhook():
                             username = user_info['first_name']
                             language = user_info['locale']
                             gender = user_info['gender']
-                            kernel.respond("my name is "+ username)
-                            kernel.respond("i am "+ gender)
+                            name_text = "my name is "+ username + '.'
+                            gender_text = "i am "+ gender + '.'
+                            message_text = name_text + gender_text + message_text
 
                     # kernel now ready for use
-                            greeting = "Hi "+username+", nice to meet you!"
-                            counter += 1
-                            log("counter = {counte}".format(counte=counter))
-                        send_message(sender_id, greeting)
+                        #     greeting = "Hi "+username+", nice to meet you!"
+                        #     counter += 1
+                        #     log("counter = {counte}".format(counte=counter))
+                        # send_message(sender_id, greeting)
                         send_template_message(sender_id, " ")
+                        counter += 1
+                        log("counter = {counte}".format(counte=counter))
 
                     with open ('isin_list_str', 'rb') as fp:
                         isin_list_str = pickle.load(fp)
