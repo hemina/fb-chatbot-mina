@@ -13,6 +13,8 @@ url_base = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet
 graph_url = 'https://graph.facebook.com/v2.6'
 counter = 0
 
+os.environ["PAGE_ACCESS_TOKEN"] = "EAAXIHwFxIAQBAKYzlZCF6lChaURccWzYumbzrll4pjfkPBb0ZClhJtoesU5ROG56Ih21Ccsmf9MAWHJGL758I6RXkMPPAfK5dfQtDxY8sPQNjSDOw9EZBwHSPyIws7OADJvKyVFWEBtZButrhkyuIhJjE18SaxXnRWncEyQNLAZDZD"
+
 app = Flask(__name__)
 
 def init_fundsheet(url, url_base):
@@ -22,7 +24,7 @@ def init_fundsheet(url, url_base):
     isin_list = []
     for i in xrange(data.shape[0]):
         isin_list.extend(data['isin_codes'][i]) 
-    isin_list_str = ' ,'.join(isin_list)
+    isin_list_str = isin_list #' ,'.join(isin_list)
 
     name_list = []
     for i in xrange(data.shape[0]):
@@ -129,8 +131,8 @@ def setParam(kernel):
     kernel.setBotPredicate("website","http://www.bnpparibas-ip.com/en/")
     return
 
-def check_isin(code, isin_list_str):
-    return (code.lower() in isin_list_str.lower())
+def check_isin(code, isin_list):
+    return (code.lower() in isin_list)
 
 def check_name(name, name_list_str):
     return (name.lower() in name_list_str.lower())
@@ -149,14 +151,19 @@ def respond(sessionId, message_text, kernel, name_list_str, isin_list_str, dict_
         bot_response = kernel.respond(message_text, sessionId)
                     
                 
-        if check_isin(message_text, isin_list_str):           
-            url = dict_url[message_text]
-            bot_response = " Maybe you can try this link: "+ url
+        if check_isin(message_text, dict_url.keys()):   
+            try:        
+                url = dict_url[message_text]
+                bot_response = " Maybe you can try this link: "+ url
+            except:
+                bot_response = " "
             
         elif check_name(message_text, name_list_str):
             keywords = re.sub(' ', '+', message_text)
             url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords            
             bot_response = " Maybe you can try this link: "+ url
+
+        print kernel.getPredicate("name", sessionId)
                 
     return bot_response   
 
@@ -197,17 +204,6 @@ def webhook():
                     except KeyError:
                         message_text = "smile"
 
-                    kernel = aiml.Kernel()
-                    setParam(kernel)
-
-                    if os.path.isfile("bot_brain.brn"):
-                        kernel.bootstrap(brainFile = "bot_brain.brn")
-                    else:
-                        kernel.bootstrap(learnFiles = os.path.abspath("aiml/std-startup.xml"), commands = "load aiml b")
-                        kernel.respond("load aiml b")                       
-
-                        kernel.saveBrain("bot_brain.brn")
-
                     if counter == 0:
                         filename = 'funds'+'-'+time.strftime("%Y-%m-%d")+'.csv'
                         if not os.path.isfile(filename):
@@ -220,11 +216,13 @@ def webhook():
                             language = user_info['locale']
                             gender = user_info['gender']
 
-                            name_text = "my name is "+ username + '.'
-                            gender_text = "i am "+ gender + '.'
+                            kernel.setPredicate("name", username, sender_id)
+                            kernel.setPredicate("gender", gender, sender_id)
+                            # name_text = "my name is "+ username + '.'
+                            # gender_text = "i am "+ gender + '.'
 
-                            kernel.respond(name_text) 
-                            kernel.respond(gender_text) 
+                            # kernel.respond(name_text) 
+                            # kernel.respond(gender_text) 
                             #message_text = name_text + gender_text + message_text
 
                     # kernel now ready for use
@@ -399,6 +397,16 @@ def log(message):  # simple wrapper for logging to stdout on heroku
     print str(message)
     sys.stdout.flush()
 
+kernel = aiml.Kernel()
+setParam(kernel)
+
+if os.path.isfile("bot_brain.brn"):
+    kernel.bootstrap(brainFile = "bot_brain.brn")
+else:
+    kernel.bootstrap(learnFiles = os.path.abspath("aiml/std-startup.xml"), commands = "load aiml b")
+    kernel.respond("load aiml b")                       
+
+    kernel.saveBrain("bot_brain.brn")
 
 if __name__ == '__main__':
     app.run(debug=True)
