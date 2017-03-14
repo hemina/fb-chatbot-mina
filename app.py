@@ -320,6 +320,7 @@ def webhook():
                         print "postback", messaging_event                  
                         received_postback(messaging_event)
                         treating_flag = False
+    print counter
 
     return "ok", 200
 
