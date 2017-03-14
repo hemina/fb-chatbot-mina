@@ -13,8 +13,7 @@ url_base = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet
 graph_url = 'https://graph.facebook.com/v2.6'
 counter = 0
 
-os.environ["PAGE_ACCESS_TOKEN"] = "EAAXIHwFxIAQBAKYzlZCF6lChaURccWzYumbzrll4pjfkPBb0ZClhJtoesU5ROG56Ih21Ccsmf9MAWHJGL758I6RXkMPPAfK5dfQtDxY8sPQNjSDOw9EZBwHSPyIws7OADJvKyVFWEBtZButrhkyuIhJjE18SaxXnRWncEyQNLAZDZD"
-
+os.environ["PAGE_ACCESS_TOKEN"] = "EAAXIHwFxIAQBAFZBOSJSIirS1bNgOaFp5RlYZCTaP4DesaS2qAGP3soDT5O6WgWeFZBNPyAMwbJZC4TbfXuLQIkTCZBzrdeNX5sEpkddUGi5PTzSsZB7mfAebkEPF9J7sV2PAjNjxKqsOsZB1jLWAMUPoJQNqAjifLP4Xq6FLg8aQZDZD"
 app = Flask(__name__)
 
 def init_fundsheet(url, url_base):
@@ -164,8 +163,8 @@ def verify():
     if request.args.get("hub.mode") == "subscribe" and request.args.get("hub.challenge"):
         #global counter
         #counter = 0
-        if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
-            return "Verification token mismatch", 403
+        # if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
+        #     return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
 
     return "Hello world", 200
@@ -247,9 +246,8 @@ def webhook():
                     pass
 
                 if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
-                    pass
-                    #print "postback", messaging_event
-                    #received_postback(messaging_event)
+                    print "postback", messaging_event                  
+                    received_postback(messaging_event)
 
     return "ok", 200
 
@@ -276,7 +274,7 @@ def send_message(recipient_id, message_text):
     if r.status_code != 200:
         log(r.status_code)
         log(r.text)
-        
+
 def send_template_message(recipient_id, message_text):
 
     log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
@@ -296,46 +294,50 @@ def send_template_message(recipient_id, message_text):
             "type":"template",
             "payload":{
             "template_type":"generic",
-            "elements": [{
+            "elements": [
+            {
+            "title": "Hello, how could I help you?",
+                "buttons": [{
+                  "type": "postback",
+                  "title": "Find a fund",
+                  "payload": "fundsearch"
+                }],
+            },
+            {
             "title": "BNP Paribas Investment Partners",
             #"subtitle": "Next-generation virtual reality",
             "item_url": "http://www.bnpparibas-ip.fr",               
             #"image_url": "./img/bnpip.jpg",
-            "buttons": [{
-              "type": "web_url",
-              "url": "http://www.bnpparibas-ip.fr",
-              "title": "Website in French"
-            }, {
-              "type": "web_url",
-              "url": "http://www.bnpparibas-ip.com/en/",
-              "title": "Website in English",
-            }],
-          }, {
+                "buttons": [{
+                  "type": "web_url",
+                  "url": "http://www.bnpparibas-ip.fr",
+                  "title": "Website in French"
+                }, {
+                  "type": "web_url",
+                  "url": "http://www.bnpparibas-ip.com/en/",
+                  "title": "Website in English",
+                }],
+            }, 
+            {
             "title": "Investo",
             "item_url": "http://investo.bnpparibas/",               
             #"image_url": "https://www.google.fr/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjbsZO-tMLSAhWJuBQKHQSADPgQjRwIBw&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Fapp%2Finvesto-par-bnp-paribas%2Fid1189529445%3Fmt%3D8&psig=AFQjCNHkkFs7ZrfJGrDcKqVwNaDesChYyw&ust=1488907950510928",
-            "buttons": [{
-              "type": "web_url",
-              "url": "http://investo.bnpparibas/",
-              "title": "Download Investo"
-            # }, {
-            #   "type": "postback",
-            #   "title": "Call Postback",
-            #   "payload": "Payload for second bubble",
-            # }]
-            # "text":message_text,
-            # "buttons":[
-            # {
-            #     "type":"web_url",
-            #     "url":"http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet",
-            #     "title":"Show fundsheet Website"
-            # },
-            # {
-            # "type":"postback",
-            # "title":"English",
-            # "payload":"English"
-            }
-            ]
+                "buttons": [{
+                  "type": "web_url",
+                  "url": "http://investo.bnpparibas/",
+                  "title": "Download Investo"
+                }]
+            },
+            {
+            "title": "Contact us",
+            
+            # "item_url": "http://investo.bnpparibas/",               
+            #"image_url": "https://www.google.fr/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjbsZO-tMLSAhWJuBQKHQSADPgQjRwIBw&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Fapp%2Finvesto-par-bnp-paribas%2Fid1189529445%3Fmt%3D8&psig=AFQjCNHkkFs7ZrfJGrDcKqVwNaDesChYyw&ust=1488907950510928",
+                "buttons": [{
+                  "type": "web_url",
+                  "url": "https://mabanque.bnpparibas/fr/nous-contacter/nous-contacter",
+                  "title": "Contact us"
+                }]
             }
             ]
             }
@@ -345,7 +347,77 @@ def send_template_message(recipient_id, message_text):
     r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
     if r.status_code != 200:
         log(r.status_code)
-        log(r.text)
+        log(r.text)        
+        
+# def send_template_message(recipient_id, message_text):
+
+#     log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
+
+#     params = {
+#         "access_token": os.environ["PAGE_ACCESS_TOKEN"]
+#     }
+#     headers = {
+#         "Content-Type": "application/json"
+#     }
+#     data = json.dumps({
+#         "recipient": {
+#             "id": recipient_id
+#         },
+#         "message":{
+#             "attachment":{
+#             "type":"template",
+#             "payload":{
+#             "template_type":"generic",
+#             "elements": [{
+#             "title": "BNP Paribas Investment Partners",
+#             #"subtitle": "Next-generation virtual reality",
+#             "item_url": "http://www.bnpparibas-ip.fr",               
+#             #"image_url": "./img/bnpip.jpg",
+#             "buttons": [{
+#               "type": "web_url",
+#               "url": "http://www.bnpparibas-ip.fr",
+#               "title": "Website in French"
+#             }, {
+#               "type": "web_url",
+#               "url": "http://www.bnpparibas-ip.com/en/",
+#               "title": "Website in English",
+#             }],
+#           }, {
+#             "title": "Investo",
+#             "item_url": "http://investo.bnpparibas/",               
+#             #"image_url": "https://www.google.fr/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjbsZO-tMLSAhWJuBQKHQSADPgQjRwIBw&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Fapp%2Finvesto-par-bnp-paribas%2Fid1189529445%3Fmt%3D8&psig=AFQjCNHkkFs7ZrfJGrDcKqVwNaDesChYyw&ust=1488907950510928",
+#             "buttons": [{
+#               "type": "web_url",
+#               "url": "http://investo.bnpparibas/",
+#               "title": "Download Investo"
+#             # }, {
+#             #   "type": "postback",
+#             #   "title": "Call Postback",
+#             #   "payload": "Payload for second bubble",
+#             # }]
+#             # "text":message_text,
+#             # "buttons":[
+#             # {
+#             #     "type":"web_url",
+#             #     "url":"http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet",
+#             #     "title":"Show fundsheet Website"
+#             # },
+#             # {
+#             # "type":"postback",
+#             # "title":"English",
+#             # "payload":"English"
+#             }
+#             ]
+#             }
+#             ]
+#             }
+#         }
+#         }
+#     })
+#     r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
+#     if r.status_code != 200:
+#         log(r.status_code)
+#         log(r.text)
 
 def received_postback(messaging_event):
     sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
@@ -356,7 +428,9 @@ def received_postback(messaging_event):
 
     log("Received postback for {user} and page {recipient}: {text}".format(user=sender_id, recipient=recipient_id, text=payload))
     #log("Received postback for user %d and page %d with payload '%s' ", sender_id, recipient_id, payload)
-
+    if payload == "fundsearch":
+        response = "You can either type the ISIN code such as 'lu1165135440' for a precise search of fundsheet, or type the keywords of the fund name such as 'aqua' for a vague fundsearch."
+        send_message(sender_id, response)
     # When a postback is called, we'll send a message back to the sender to let them know it was successful
     # send_message(sender_id, payload)
 
