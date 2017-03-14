@@ -173,8 +173,8 @@ def verify():
     # the 'hub.challenge' value it receives in the query arguments
     
     if request.args.get("hub.mode") == "subscribe" and request.args.get("hub.challenge"):
-        global counter
-        counter = 0
+        #global counter
+        #counter = 0
         if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
             return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
@@ -261,8 +261,9 @@ def webhook():
                     pass
 
                 if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
+                    pass
                     #print "postback", messaging_event
-                    received_postback(messaging_event)
+                    #received_postback(messaging_event)
 
     return "ok", 200
 
