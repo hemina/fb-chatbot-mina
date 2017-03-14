@@ -91,7 +91,7 @@ else:
 url = "http://bnp-ip-onecms-api.bearstech.com/push/fundsearchv2/PV_FR-IND/FRE"
 url_base = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet/"
 graph_url = 'https://graph.facebook.com/v2.6'
-counter = 0
+counter = {}
 kernel = kernel_en
 language = 'en'
 treating_flag = False
@@ -240,11 +240,15 @@ def webhook():
                         recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
                         try:
                             message_text = messaging_event["message"]["text"]  # the message's text
-
                         except KeyError:
                             message_text = "smile"
+                            
+                        if sender_id in kernel.getSessionData():
+                            counter[sender_id] = 1
+                        else:
+                            counter[sender_id] = 0                            
 
-                        if counter == 0:
+                        if counter[sender_id] == 0:
                             filename = 'funds'+'-'+time.strftime("%Y-%m-%d")+'.csv'
                             if not os.path.isfile(filename):
                                 init_fundsheet(url, url_base)         
@@ -285,8 +289,8 @@ def webhook():
                             #     log("counter = {counte}".format(counte=counter))
                             # send_message(sender_id, greeting)
                             send_template_message(sender_id, " ", language)
-                        counter += 1
-                        log("counter = {counte}".format(counte=counter))
+                        counter[sender_id] += 1
+                        log("counter = {counte}".format(counte=counter[sender_id]))
 
                         with open ('name_list_str', 'rb') as fp:
                             name_list_str = pickle.load(fp)
@@ -298,10 +302,7 @@ def webhook():
                         send_message(sender_id, bot_response)
                         treating_flag = False
                         
-                        if '_global' in kernel.getSessionData():
-                            print "lalala"
-                        if '1262205997168437' in kernel.getSessionData():
-                            print "hahaah"
+
                     if messaging_event.get("delivery"):  # delivery confirmation
                         pass
                         # sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
@@ -482,76 +483,6 @@ def send_template_message(recipient_id, message_text, language = 'en'):
     if r.status_code != 200:
         log(r.status_code)
         log(r.text)        
-        
-# def send_template_message(recipient_id, message_text):
-
-#     log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
-
-#     params = {
-#         "access_token": os.environ["PAGE_ACCESS_TOKEN"]
-#     }
-#     headers = {
-#         "Content-Type": "application/json"
-#     }
-#     data = json.dumps({
-#         "recipient": {
-#             "id": recipient_id
-#         },
-#         "message":{
-#             "attachment":{
-#             "type":"template",
-#             "payload":{
-#             "template_type":"generic",
-#             "elements": [{
-#             "title": "BNP Paribas Investment Partners",
-#             #"subtitle": "Next-generation virtual reality",
-#             "item_url": "http://www.bnpparibas-ip.fr",               
-#             #"image_url": "./img/bnpip.jpg",
-#             "buttons": [{
-#               "type": "web_url",
-#               "url": "http://www.bnpparibas-ip.fr",
-#               "title": "Website in French"
-#             }, {
-#               "type": "web_url",
-#               "url": "http://www.bnpparibas-ip.com/en/",
-#               "title": "Website in English",
-#             }],
-#           }, {
-#             "title": "Investo",
-#             "item_url": "http://investo.bnpparibas/",               
-#             #"image_url": "https://www.google.fr/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjbsZO-tMLSAhWJuBQKHQSADPgQjRwIBw&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Fapp%2Finvesto-par-bnp-paribas%2Fid1189529445%3Fmt%3D8&psig=AFQjCNHkkFs7ZrfJGrDcKqVwNaDesChYyw&ust=1488907950510928",
-#             "buttons": [{
-#               "type": "web_url",
-#               "url": "http://investo.bnpparibas/",
-#               "title": "Download Investo"
-#             # }, {
-#             #   "type": "postback",
-#             #   "title": "Call Postback",
-#             #   "payload": "Payload for second bubble",
-#             # }]
-#             # "text":message_text,
-#             # "buttons":[
-#             # {
-#             #     "type":"web_url",
-#             #     "url":"http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet",
-#             #     "title":"Show fundsheet Website"
-#             # },
-#             # {
-#             # "type":"postback",
-#             # "title":"English",
-#             # "payload":"English"
-#             }
-#             ]
-#             }
-#             ]
-#             }
-#         }
-#         }
-#     })
-#     r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
-#     if r.status_code != 200:
-#         log(r.status_code)
-#         log(r.text)
 
 def received_postback(messaging_event):
     global language
