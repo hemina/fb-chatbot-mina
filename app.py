@@ -298,7 +298,7 @@ def webhook():
                         send_message(sender_id, bot_response)
                         treating_flag = False
                         
-
+                        print kernel.getSessionData()
                     if messaging_event.get("delivery"):  # delivery confirmation
                         pass
                         # sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
