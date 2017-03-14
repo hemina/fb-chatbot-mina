@@ -21,10 +21,6 @@ def init_fundsheet(url, url_base):
     d = json.loads(urllib.urlopen(url).read())
     data = pd.DataFrame(d['funds'])
 
-    isin_list = []
-    for i in xrange(data.shape[0]):
-        isin_list.extend(data['isin_codes'][i]) 
-
     name_list = []
     for i in xrange(data.shape[0]):
         name_list.append(data['default_share_name'][i]) 
@@ -149,7 +145,7 @@ def respond(sessionId, message_text, kernel, name_list_str, dict_url):
                 
         if check_isin(message_text, dict_url.keys()):       
             url = dict_url[message_text]
-            bot_response = " Maybe you can try this link: "+ url
+            bot_response = " Please find here the fundsheet you are looking for : "+ url
 
             
         elif check_name(message_text, name_list_str):
