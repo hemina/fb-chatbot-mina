@@ -244,7 +244,7 @@ def webhook():
                             message_text = "smile"
                             
                         if sender_id in kernel.getSessionData():
-                            counter[sender_id] = 1
+                            counter[sender_id] += 1
                         else:
                             counter[sender_id] = 0                            
 
@@ -289,7 +289,7 @@ def webhook():
                             #     log("counter = {counte}".format(counte=counter))
                             # send_message(sender_id, greeting)
                             send_template_message(sender_id, " ", language)
-                        counter[sender_id] += 1
+                        #counter[sender_id] += 1
                         log("counter = {counte}".format(counte=counter[sender_id]))
 
                         with open ('name_list_str', 'rb') as fp:
