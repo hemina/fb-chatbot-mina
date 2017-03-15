@@ -92,8 +92,7 @@ url = "http://bnp-ip-onecms-api.bearstech.com/push/fundsearchv2/PV_FR-IND/FRE"
 url_base = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet/"
 graph_url = 'https://graph.facebook.com/v2.6'
 counter = {}
-kernel = kernel_en
-language = 'en'
+language = {}
 treating_flag = False
 
 os.environ["PAGE_ACCESS_TOKEN"] = "EAAXIHwFxIAQBAFZBOSJSIirS1bNgOaFp5RlYZCTaP4DesaS2qAGP3soDT5O6WgWeFZBNPyAMwbJZC4TbfXuLQIkTCZBzrdeNX5sEpkddUGi5PTzSsZB7mfAebkEPF9J7sV2PAjNjxKqsOsZB1jLWAMUPoJQNqAjifLP4Xq6FLg8aQZDZD"
@@ -169,7 +168,10 @@ def check_name(name, name_list_str):
     return (name.lower() in name_list_str.lower())
 
 #if message_text contains isin or fund's name, return corresponding url, otherwise return the kernel's text response
-def respond(sessionId, message_text, kernel, name_list_str, dict_url, language = 'en'):
+def respond(sessionId, message_text, name_list_str, dict_url, language = 'en'):
+    global kernel_fr
+    global kernel_en
+    
     try:
         message_text = unicodedata.normalize('NFD', message_text).encode('ascii', 'ignore').lower()
     except TypeError:
@@ -186,7 +188,6 @@ def respond(sessionId, message_text, kernel, name_list_str, dict_url, language =
             bot_response = " Please find here the fundsheet you are looking for : "+ url
         
     elif check_name(message_text, name_list_str):
-        print "Yes!"
         keywords = re.sub(' ', '+', message_text)
         url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords  
 
@@ -197,7 +198,11 @@ def respond(sessionId, message_text, kernel, name_list_str, dict_url, language =
             bot_response = " Maybe you can try this link: "+ url           
 
     else: 
-        bot_response = kernel.respond(message_text, sessionId)
+        if language == 'fr':
+            bot_response = kernel_fr.respond(message_text, sessionId)            
+        else:          
+            bot_response = kernel_en.respond(message_text, sessionId) 
+
         if bot_response == "" :
             bot_response = ':)'
             #print kernel.getPredicate("name", sessionId)   
@@ -210,8 +215,8 @@ def verify():
     # the 'hub.challenge' value it receives in the query arguments
     
     if request.args.get("hub.mode") == "subscribe" and request.args.get("hub.challenge"):
-        if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
-            return "Verification token mismatch", 403
+        # if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
+        #     return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
 
     return "Hello world", 200
@@ -223,8 +228,8 @@ def webhook():
     
     # endpoint for processing incoming messaging events
     global counter
-    global kernel
-    global language
+    global kernel_fr
+    global kernel_en
     global treating_flag
     
     data = request.get_json()
@@ -243,7 +248,9 @@ def webhook():
                         except KeyError:
                             message_text = "smile"
                             
-                        if sender_id in kernel.getSessionData():
+                        if sender_id in kernel_en.getSessionData():
+                            counter[sender_id] += 1
+                        if sender_id in kernel_fr.getSessionData():
                             counter[sender_id] += 1
                         else:
                             counter[sender_id] = 0                            
@@ -259,36 +266,22 @@ def webhook():
                                 username = user_info['first_name']
                                 locale = user_info['locale']
                                 gender = user_info['gender']
-                                language = locale.split("_")[0]
+                                language[sender_id] = locale.split("_")[0]
 
-                                if language == 'fr':
-                                    kernel = kernel_fr
+                                if language[sender_id] == 'fr':                                   
                                     print "change to French"
+                                    kernel_fr.setPredicate("name", username, sender_id)
+                                    kernel_fr.setPredicate("gender", gender, sender_id)     
+                                    kernel_fr.setPredicate("language", language[sender_id], sender_id)
+                                    kernel_fr.saveBrain("bot_brain_fr.brn")
+                                else:
+                                    language[sender_id] = 'en'
+                                kernel_en.setPredicate("name", username, sender_id)
+                                kernel_en.setPredicate("gender", gender, sender_id)                             
+                                kernel_en.setPredicate("language", language[sender_id], sender_id)
+                                kernel_en.saveBrain("bot_brain_en.brn")
 
-                                    kernel.setPredicate("name", username, sender_id)
-                                    kernel.setPredicate("gender", gender, sender_id)     
-                                    kernel.setPredicate("language", language, sender_id)
-                                    kernel.saveBrain("bot_brain_fr.brn")
-                            else:
-                                kernel = kernel_en
-                                language = 'en'
-                                kernel.setPredicate("name", username, sender_id)
-                                kernel.setPredicate("gender", gender, sender_id)                             
-                                kernel.setPredicate("language", language, sender_id)
-                                kernel.saveBrain("bot_brain_en.brn")
-                                # name_text = "my name is "+ username + '.'
-                                # gender_text = "i am "+ gender + '.'
-
-                                # kernel.respond(name_text) 
-                                # kernel.respond(gender_text) 
-                                #message_text = name_text + gender_text + message_text
-
-                        # kernel now ready for use
-                            #     greeting = "Hi "+username+", nice to meet you!"
-                            #     counter += 1
-                            #     log("counter = {counte}".format(counte=counter))
-                            # send_message(sender_id, greeting)
-                            send_template_message(sender_id, " ", language)
+                            send_template_message(sender_id, " ", language[sender_id])
                         #counter[sender_id] += 1
                         log("counter = {counte}".format(counte=counter[sender_id]))
 
@@ -297,21 +290,15 @@ def webhook():
 
                         with open ('dict_url', 'rb') as fp:
                             dict_url = pickle.load(fp)  
-                            
-                        bot_response = respond(sender_id, message_text, kernel, name_list_str, dict_url, language)
+                        print kernel_en.getSessionData()  
+                        print kernel_fr.getSessionData()   
+                        bot_response = respond(sender_id, message_text, name_list_str, dict_url, language[sender_id])
                         send_message(sender_id, bot_response)
                         treating_flag = False
                         
 
                     if messaging_event.get("delivery"):  # delivery confirmation
                         pass
-                        # sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
-                        # user_info = get_user_info(sender_id)
-                        # if user_info:
-                        #     username = user_info['first_name']
-                        #     language = user_info['locale']
-                        #     bot_response = "Hi "+username+", nice to meet you!"
-                        # send_template_message(sender_id, " ")
 
                     if messaging_event.get("optin"):  # optin confirmation
                         pass
@@ -486,7 +473,7 @@ def send_template_message(recipient_id, message_text, language = 'en'):
         log(r.text)        
 
 def received_postback(messaging_event):
-    global language
+    global language    
     sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
     recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
 
@@ -495,15 +482,8 @@ def received_postback(messaging_event):
 
     log("Received postback for {user} and page {recipient}: {text}".format(user=sender_id, recipient=recipient_id, text=payload))
 
-    # user_info = get_user_info(sender_id)
-    # if user_info:
-    #     locale = user_info['locale']
-    #     language = locale.split("_")[0]    
-
-    # print "language=", language
-    #log("Received postback for user %d and page %d with payload '%s' ", sender_id, recipient_id, payload)
     if payload == "fundsearch":
-        if language == 'fr':
+        if language[sender_id] == 'fr':
             response = "Vous pouvez taper le code ISIN comme 'lu1165135440' pour une recherche precise, ou le mot cle de nom du fonds comme 'aqua'."
         else:
             response = "You can either type the ISIN code such as 'lu1165135440' for a precise search of fundsheet, or type the keywords of the fund name such as 'aqua' for a vague fundsearch."
