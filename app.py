@@ -1,107 +1,309 @@
-import os
-import sys
-import aiml
-import requests
-from flask import Flask, request
-import urllib, json
+
+# coding: utf-8
+
+# In[126]:
+
+import os, requests, json, sys
+import random, string
+import urllib, pickle, unicodedata, re, time
 import pandas as pd
-import re, unicodedata, time
-import pickle
-import warnings
+import aiml
+from flask import Flask, render_template, request, jsonify
 
-def setParam(kernel):
-    kernel.setBotPredicate("name", "Pikachu")
-    kernel.setBotPredicate('master', 'Mina')
-    kernel.setBotPredicate("age","0")
-    kernel.setBotPredicate("birthday","March 8, 2017")
-    kernel.setBotPredicate("birthplace","Paris")
-    kernel.setBotPredicate("botmaster", "botmaster")
-    kernel.setBotPredicate("boyfriend","I am single")
-    kernel.setBotPredicate("build","PyAIML")
-    kernel.setBotPredicate("celebrities","Oprah, Steve Carell, John Stewart, Lady Gaga")
-    kernel.setBotPredicate("city","Paris")
-    kernel.setBotPredicate("class","artificial intelligence")
-    kernel.setBotPredicate("country","France")
-    kernel.setBotPredicate("domain","Machine")
-    kernel.setBotPredicate("email","mina.he1992@gmail.com")
-    kernel.setBotPredicate("emotions","as a robot I lack human emotions")
-    kernel.setBotPredicate("ethics","the Golden Rule")
-    kernel.setBotPredicate("etype","9")
-    kernel.setBotPredicate("family","chat bot")
-    kernel.setBotPredicate("favoriteactor","Tom Hanks")
-    kernel.setBotPredicate("favoritecolor","pink")
-    kernel.setBotPredicate("favoritefood","electricity")
-    kernel.setBotPredicate("favoritequestion","What's your favorite movie?")
-    kernel.setBotPredicate("favoritesport","dance")
-    kernel.setBotPredicate("favoritesubject","computers")
-    kernel.setBotPredicate("feelings","as a robot I lack human emotions")
-    kernel.setBotPredicate("footballteam","Patriots")
-    kernel.setBotPredicate("forfun","chat online")
-    kernel.setBotPredicate("friend","Hajar")
-    kernel.setBotPredicate("friends","Pierre, Yasmine")
-    kernel.setBotPredicate("gender","female")
-    kernel.setBotPredicate("genus","AIML")
-    kernel.setBotPredicate("girlfriend","I am just a little girl")
-    kernel.setBotPredicate("hair","I have some plastic wires")
-    kernel.setBotPredicate("job","chat bot")
-    kernel.setBotPredicate("kindmusic","techno")
-    kernel.setBotPredicate("location","Paris")
-    kernel.setBotPredicate("looklike","a computer")
-    kernel.setBotPredicate("nationality","French")
-    kernel.setBotPredicate("order","robot")
-    kernel.setBotPredicate("orientation","straight")
-    kernel.setBotPredicate("party","Independent")
-    kernel.setBotPredicate("phylum","software")
-    kernel.setBotPredicate("question","Which funds would you want to invest in?")
-    kernel.setBotPredicate("website","http://www.bnpparibas-ip.com/en/")
-    return
+CONFIG_FILE = "config.json"
 
+class User(object):
 
-##################################  English kernel   ###########################################
-kernel_en = aiml.Kernel()
-setParam(kernel_en)
+    with open(CONFIG_FILE) as json_data_file:
+        config = json.load(json_data_file)   
 
-if os.path.isfile("bot_brain_en.brn"):
-    kernel_en.bootstrap(brainFile = "bot_brain_en.brn")
-else:
-    kernel_en.bootstrap(learnFiles = os.path.abspath("aiml/std-startup.xml"), commands = "load aiml b")
-    kernel_en.respond("load aiml b")                       
-
-    kernel_en.saveBrain("bot_brain_en.brn")
-
-################################  French kernel   #############################
-kernel_fr = aiml.Kernel()
-setParam(kernel_fr)
-
-if os.path.isfile("bot_brain_fr.brn"):
-    kernel_fr.bootstrap(brainFile = "bot_brain_fr.brn")
-else:         
-    rootdir1 = os.getcwd()+"/aiml_fr"           
-    for root, dirnames, filenames in os.walk( rootdir1 ):
-        print root
-        for filename in filenames:
+    users_facebook = {}
+    
+    @classmethod
+    def add_user_facebook(cls, userId, user):
+        cls.users_facebook[userId] = user
+        return  
+    
+    # @classmethod
+    # def check_user_facebook(cls, userId):
+    #     if cls.users_facebook.get(userId):
+    #         return True
+    #     return False
+    
+    #for Facebook
+    def __init__(self, userId):
+        self.userId = userId
+        if not User.users_facebook.get(userId):
             try:
-                kernel_fr.bootstrap(learnFiles = os.path.join(root,filename))
-            except TypeError:
-                print(os.path.join(root,filename))
-    kernel_fr.saveBrain("bot_brain_fr.brn")
+                user = get_user_info(userId) 
+                user['language'] = user['locale'].split("_")[0]
+                user['counter'] = 0
+                user['treat_flag'] = False
+                self.add_user_facebook(userId, user) 
+            except: # when can't get user profil
+                user = {}
+                user['language'] = 'en'
+                user['counter'] = 0
+                user['treat_flag'] = False                
+                self.add_user_facebook(userId, user)
+        else:
+            pass #user already in the list
+                  
 
-####################################### Define global variables ######################################
 
-url = "http://bnp-ip-onecms-api.bearstech.com/push/fundsearchv2/PV_FR-IND/FRE"
-url_base = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/fundsheet/"
-graph_url = 'https://graph.facebook.com/v2.6'
-counter = {}
-language = {}
-treating_flag = False
+class Bot(object):
+    def __init__(self, name, config, language = 'en'):
+        self.name = name
+        self.config = config
+        self.language = language
+        self.kernel = aiml.Kernel()
+        self.kernel.setBotPredicate('name', self.name)
+        
+        for element in self.config['param'] :
+            self.kernel.setBotPredicate(element ,self.config['param'][element])        
+                
+        brain_name = "bot_brain_"+self.language+".brn"        
+        if os.path.isfile(brain_name):
+            self.kernel.bootstrap(brainFile = brain_name)
+            
+        else:
+            #no matter which language the user use, we load english aiml files all the time    
+            self.kernel.bootstrap(learnFiles = os.path.abspath("aiml/std-startup.xml"), commands = "load aiml b")
+            self.kernel.respond("load aiml b")                       
+            self.kernel.saveBrain(brain_name)
+                    
+            if self.language == 'fr': #french kernel        
+                rootdir1 = os.getcwd()+"/aiml_fr"           
+                for root, dirnames, filenames in os.walk( rootdir1 ):
+                    print root
+                    for filename in filenames:
+                        try:
+                            self.kernel.bootstrap(learnFiles = os.path.join(root,filename))
+                        except TypeError:
+                            print(os.path.join(root,filename))
+                self.kernel.saveBrain(brain_name)
 
-os.environ["PAGE_ACCESS_TOKEN"] = "EAAXIHwFxIAQBAFZBOSJSIirS1bNgOaFp5RlYZCTaP4DesaS2qAGP3soDT5O6WgWeFZBNPyAMwbJZC4TbfXuLQIkTCZBzrdeNX5sEpkddUGi5PTzSsZB7mfAebkEPF9J7sV2PAjNjxKqsOsZB1jLWAMUPoJQNqAjifLP4Xq6FLg8aQZDZD"
-app = Flask(__name__)
+        with open ('name_list_str', 'rb') as fp:
+            self.name_list_str = pickle.load(fp)
 
-#############################################################################################
+        with open ('dict_url', 'rb') as fp:
+            self.dict_url = pickle.load(fp)                 
+            
+    def send_message(self, recipient_id, message_text):
+        log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
 
-def init_fundsheet(url, url_base):
-    d = json.loads(urllib.urlopen(url).read())
+        params = {
+            "access_token": self.config["PAGE_ACCESS_TOKEN"]
+        }
+        headers = {
+            "Content-Type": "application/json"
+        }
+        data = json.dumps({
+            "recipient": {
+                "id": recipient_id
+            },
+            "message": {
+                "text": message_text
+            }
+        })
+        r = requests.post(self.config['graph_url']+"/me/messages", params=params, headers=headers, data=data)
+        if r.status_code != 200:
+            log(r.status_code)
+            log(r.text)
+
+    def send_template_message(self, recipient_id):
+
+        log("sending template message to {recipient}".format(recipient=recipient_id))
+
+        params = {
+            "access_token": self.config["PAGE_ACCESS_TOKEN"]
+        }
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        if self.language == 'fr':
+            data = json.dumps({
+                "recipient": {
+                    "id": recipient_id
+                },
+                "message":{
+                    "attachment":{
+                    "type":"template",
+                    "payload":{
+                    "template_type":"generic",
+                    "elements": [
+                    {
+                    "title": "Bonjour, qu'est-ce que je peux vous aider?",
+                        "buttons": [{
+                          "type": "postback",
+                          "title": "Chercher des fonds",
+                          "payload": "fundsearch"
+                        }],
+                    },
+                    {
+                    "title": "BNP Paribas Investment Partners",
+                    #"subtitle": "Next-generation virtual reality",
+                    "item_url": "http://www.bnpparibas-ip.fr",               
+                    #"image_url": "./img/bnpip.jpg",
+                        "buttons": [{
+                          "type": "web_url",
+                          "url": "http://www.bnpparibas-ip.fr",
+                          "title": "Site en FRANCAIS"
+                        }, {
+                          "type": "web_url",
+                          "url": "http://www.bnpparibas-ip.com/en/",
+                          "title": "Site en ANGLAIS",
+                        }],
+                    }, 
+                    {
+                    "title": "Investo",
+                    "item_url": "http://investo.bnpparibas/",               
+                    #"image_url": "https://www.google.fr/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjbsZO-tMLSAhWJuBQKHQSADPgQjRwIBw&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Fapp%2Finvesto-par-bnp-paribas%2Fid1189529445%3Fmt%3D8&psig=AFQjCNHkkFs7ZrfJGrDcKqVwNaDesChYyw&ust=1488907950510928",
+                        "buttons": [{
+                          "type": "web_url",
+                          "url": "http://investo.bnpparibas/",
+                          "title": "TELECHARGER Investo"
+                        }]
+                    },
+                    {
+                    "title": "Nous contacter",
+
+                    # "item_url": "http://investo.bnpparibas/",               
+                    #"image_url": "https://www.google.fr/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjbsZO-tMLSAhWJuBQKHQSADPgQjRwIBw&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Fapp%2Finvesto-par-bnp-paribas%2Fid1189529445%3Fmt%3D8&psig=AFQjCNHkkFs7ZrfJGrDcKqVwNaDesChYyw&ust=1488907950510928",
+                        "buttons": [{
+                          "type": "web_url",
+                          "url": "https://mabanque.bnpparibas/fr/nous-contacter/nous-contacter",
+                          "title": "Nous contacter"
+                        }]
+                    }
+                    ]
+                    }
+                }
+                }
+            })        
+
+        else:
+            data = json.dumps({
+                "recipient": {
+                    "id": recipient_id
+                },
+                "message":{
+                    "attachment":{
+                    "type":"template",
+                    "payload":{
+                    "template_type":"generic",
+                    "elements": [
+                    {
+                    "title": "Hello, how could I help you?",
+                        "buttons": [{
+                          "type": "postback",
+                          "title": "Search for a fund",
+                          "payload": "fundsearch"
+                        }],
+                    },
+                    {
+                    "title": "BNP Paribas Investment Partners",
+                    #"subtitle": "Next-generation virtual reality",
+                    "item_url": "http://www.bnpparibas-ip.fr",               
+                    #"image_url": "./img/bnpip.jpg",
+                        "buttons": [{
+                          "type": "web_url",
+                          "url": "http://www.bnpparibas-ip.fr",
+                          "title": "Website in French"
+                        }, {
+                          "type": "web_url",
+                          "url": "http://www.bnpparibas-ip.com/en/",
+                          "title": "Website in English",
+                        }],
+                    }, 
+                    {
+                    "title": "Investo",
+                    "item_url": "http://investo.bnpparibas/",               
+                    #"image_url": "https://www.google.fr/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjbsZO-tMLSAhWJuBQKHQSADPgQjRwIBw&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Fapp%2Finvesto-par-bnp-paribas%2Fid1189529445%3Fmt%3D8&psig=AFQjCNHkkFs7ZrfJGrDcKqVwNaDesChYyw&ust=1488907950510928",
+                        "buttons": [{
+                          "type": "web_url",
+                          "url": "http://investo.bnpparibas/",
+                          "title": "Download Investo"
+                        }]
+                    },
+                    {
+                    "title": "Contact us",
+
+                    # "item_url": "http://investo.bnpparibas/",               
+                    #"image_url": "https://www.google.fr/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjbsZO-tMLSAhWJuBQKHQSADPgQjRwIBw&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Fapp%2Finvesto-par-bnp-paribas%2Fid1189529445%3Fmt%3D8&psig=AFQjCNHkkFs7ZrfJGrDcKqVwNaDesChYyw&ust=1488907950510928",
+                        "buttons": [{
+                          "type": "web_url",
+                          "url": "https://mabanque.bnpparibas/fr/nous-contacter/nous-contacter",
+                          "title": "Contact us"
+                        }]
+                    }
+                    ]
+                    }
+                }
+                }
+            })
+        r = requests.post(self.config['graph_url']+"/me/messages", params=params, headers=headers, data=data)
+        if r.status_code != 200:
+            log(r.status_code)
+            log(r.text)               
+
+    def received_postback(self, sender_id, payload):
+        log("Received postback for {user}: {text}".format(user=sender_id, text=payload))
+        if payload == "fundsearch":
+            if self.language == 'fr':
+                response = "Vous pouvez taper le code ISIN comme 'lu1165135440' pour une recherche precise, ou le mot cle de nom du fonds comme 'aqua'."
+            else:
+                response = "You can either type the ISIN code such as 'lu1165135440' for a precise search of fundsheet, or type the keywords of the fund name such as 'aqua' for a vague fundsearch."
+            self.send_message(sender_id, response) 
+        return 
+            
+    @staticmethod
+    def check_isin(code, isin_list):
+        return (code.lower() in isin_list)
+
+    @staticmethod
+    def check_name(name, name_list_str):
+        return (name.lower() in name_list_str.lower())
+
+    def respond(self, sessionId, message_text):
+        try:
+            message_text = unicodedata.normalize('NFD', message_text).encode('ascii', 'ignore').lower()
+        except TypeError:
+            message_text = message_text.encode('ascii', 'ignore').lower()
+        #print message_text
+        if self.language == 'fr':
+            if check_isin(message_text, self.dict_url.keys()):       
+                url = self.dict_url[message_text]
+                bot_response = " Veuillez trouver ici le fundsheet vous cherchez : "+ url                            
+            elif check_name(message_text, self.name_list_str):
+                keywords = re.sub(' ', '+', message_text)
+                url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords  
+                bot_response =  " Tentez ce lien pour plus d'informations: "+ url
+            else:
+                bot_response = self.kernel.respond(message_text, sessionId)
+        else: 
+            if self.check_isin(message_text, self.dict_url.keys()):       
+                url = self.dict_url[message_text]
+                bot_response = " Please find here the fundsheet you are looking for : "+ url                            
+            elif self.check_name(message_text, self.name_list_str):
+                keywords = re.sub(' ', '+', message_text)
+                url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords  
+                bot_response = " Maybe you can try this link: "+ url      
+            else:
+                bot_response = self.kernel.respond(message_text, sessionId)                
+        if bot_response == "" :
+            bot_response = ':)' 
+        return bot_response   
+        
+    def savebrain(self):
+        self.kernel.saveBrain("bot_brain_"+self.language+".brn")
+
+
+# In[129]:
+
+def init_fundsheet(fundsearch_url, fundsheet_url_base):
+    d = json.loads(urllib.urlopen(fundsearch_url).read())
     data = pd.DataFrame(d['funds'])
 
     name_list = []
@@ -131,9 +333,9 @@ def init_fundsheet(url, url_base):
     url_list = []
 
     for i in xrange(df_merged.shape[0]):
-        cls = unicodedata.normalize('NFD', data['sub_asset_class'][i]).encode('ascii', 'ignore').lower() #remove french accent
-        cls = re.sub('[^a-zA-Z0-9]','-', cls) #convert space into -
-        cls = re.sub('[-]+','-', cls) #eliminate multiple -
+        cl = unicodedata.normalize('NFD', data['sub_asset_class'][i]).encode('ascii', 'ignore').lower() #remove french accent
+        cl = re.sub('[^a-zA-Z0-9]','-', cl) #convert space into -
+        cl = re.sub('[-]+','-', cl) #eliminate multiple -
 
         name = df_merged['default_share_name'][i].replace("'","").lower()
         name = re.sub('[^a-zA-Z0-9]','-', name) #convert space into -
@@ -141,7 +343,7 @@ def init_fundsheet(url, url_base):
 
         isin = df_merged['isin'][i].lower()    
 
-        url = url_base + cls + '/' + name + isin
+        url = fundsheet_url_base + cl + '/' + name + isin
         url_list.append(url)
 
     df_merged['url'] = url_list
@@ -155,343 +357,15 @@ def init_fundsheet(url, url_base):
     with open('dict_url', 'wb') as fp:
         pickle.dump(dict_url, fp)            
     
-    filename = 'funds'+'-'+time.strftime("%Y-%m-%d")+'.csv'
-    df_merged.to_csv(filename, encoding = 'utf8', sep = ';')
-
-
-
-
-def check_isin(code, isin_list):
-    return (code.lower() in isin_list)
-
-def check_name(name, name_list_str):
-    return (name.lower() in name_list_str.lower())
-
-#if message_text contains isin or fund's name, return corresponding url, otherwise return the kernel's text response
-def respond(sessionId, message_text, name_list_str, dict_url, language = 'en'):
-    global kernel_fr
-    global kernel_en
+    filename = 'funds'+'-'+time.strftime("%Y-%m-%d")+'.json'
+    #df_merged.to_csv(filename, encoding = 'utf8', sep = ';')
     
-    try:
-        message_text = unicodedata.normalize('NFD', message_text).encode('ascii', 'ignore').lower()
-    except TypeError:
-        message_text = message_text.encode('ascii', 'ignore').lower()
-    print message_text
-                
-            
-    if check_isin(message_text, dict_url.keys()):       
-        url = dict_url[message_text]
+    with open(filename, 'w') as outfile:
+        json.dump(df_merged.reset_index().to_json(orient='records'), outfile)
 
-        if language == 'fr':
-            bot_response = " Veuillez trouver ici le fundsheet vous cherchez : "+ url
-        else:
-            bot_response = " Please find here the fundsheet you are looking for : "+ url
-        
-    elif check_name(message_text, name_list_str):
-        keywords = re.sub(' ', '+', message_text)
-        url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords  
+def get_user_info(userId):
 
-        if language == 'fr':
-            bot_response =  " Tentez ce lien pour plus d'informations: "+ url
-            
-        else:          
-            bot_response = " Maybe you can try this link: "+ url           
-
-    else: 
-        if language == 'fr':
-            bot_response = kernel_fr.respond(message_text, sessionId)            
-        else:          
-            bot_response = kernel_en.respond(message_text, sessionId) 
-
-        if bot_response == "" :
-            bot_response = ':)'
-            #print kernel.getPredicate("name", sessionId)   
-
-    return bot_response   
-
-@app.route('/', methods=['GET'])
-def verify():
-    # when the endpoint is registered as a webhook, it must echo back
-    # the 'hub.challenge' value it receives in the query arguments
-    
-    if request.args.get("hub.mode") == "subscribe" and request.args.get("hub.challenge"):
-        # if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
-        #     return "Verification token mismatch", 403
-        return request.args["hub.challenge"], 200
-
-    return "Hello world", 200
-
-
-
-@app.route('/', methods=['POST'])
-def webhook():
-    
-    # endpoint for processing incoming messaging events
-    global counter
-    global kernel_fr
-    global kernel_en
-    global treating_flag
-    
-    data = request.get_json()
-    log(data)  # you may not want to log every incoming message in production, but it's good for testing
-    if data["object"] == "page":
-        for entry in data["entry"]:
-            for messaging_event in entry["messaging"]:
-                if treating_flag == False:
-                    treating_flag = True
-                    if messaging_event.get("message"):  # someone sent us a message
-                        print messaging_event
-                        sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
-                        recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
-                        try:
-                            message_text = messaging_event["message"]["text"]  # the message's text
-                        except KeyError:
-                            message_text = "smile"
-                            
-                        if sender_id in kernel_en.getSessionData():
-                            counter[sender_id] += 1
-                        if sender_id in kernel_fr.getSessionData():
-                            counter[sender_id] += 1
-                        else:
-                            counter[sender_id] = 0                            
-
-                        if counter[sender_id] == 0:
-                            filename = 'funds'+'-'+time.strftime("%Y-%m-%d")+'.csv'
-                            if not os.path.isfile(filename):
-                                init_fundsheet(url, url_base)         
-                                
-                            user_info = get_user_info(sender_id)
-                            print user_info
-                            if user_info:
-                                username = user_info['first_name']
-                                locale = user_info['locale']
-                                gender = user_info['gender']
-                                language[sender_id] = locale.split("_")[0]
-
-                                if language[sender_id] == 'fr':                                   
-                                    print "change to French"
-                                    kernel_fr.setPredicate("name", username, sender_id)
-                                    kernel_fr.setPredicate("gender", gender, sender_id)     
-                                    kernel_fr.setPredicate("language", language[sender_id], sender_id)
-                                    kernel_fr.saveBrain("bot_brain_fr.brn")
-                                else:
-                                    language[sender_id] = 'en'
-                                kernel_en.setPredicate("name", username, sender_id)
-                                kernel_en.setPredicate("gender", gender, sender_id)                             
-                                kernel_en.setPredicate("language", language[sender_id], sender_id)
-                                kernel_en.saveBrain("bot_brain_en.brn")
-
-                            send_template_message(sender_id, " ", language[sender_id])
-                        #counter[sender_id] += 1
-                        log("counter = {counte}".format(counte=counter[sender_id]))
-
-                        with open ('name_list_str', 'rb') as fp:
-                            name_list_str = pickle.load(fp)
-
-                        with open ('dict_url', 'rb') as fp:
-                            dict_url = pickle.load(fp)  
-                        print kernel_en.getSessionData()  
-                        print kernel_fr.getSessionData()   
-                        bot_response = respond(sender_id, message_text, name_list_str, dict_url, language[sender_id])
-                        send_message(sender_id, bot_response)
-                        treating_flag = False
-                        
-
-                    if messaging_event.get("delivery"):  # delivery confirmation
-                        pass
-
-                    if messaging_event.get("optin"):  # optin confirmation
-                        pass
-
-                    if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
-                        print "postback", messaging_event                  
-                        received_postback(messaging_event)
-                        treating_flag = False
-    print counter
-
-    return "ok", 200
-
-
-def send_message(recipient_id, message_text):
-
-    log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
-
-    params = {
-        "access_token": os.environ["PAGE_ACCESS_TOKEN"]
-    }
-    headers = {
-        "Content-Type": "application/json"
-    }
-    data = json.dumps({
-        "recipient": {
-            "id": recipient_id
-        },
-        "message": {
-            "text": message_text
-        }
-    })
-    r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
-    if r.status_code != 200:
-        log(r.status_code)
-        log(r.text)
-
-def send_template_message(recipient_id, message_text, language = 'en'):
-
-    log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
-
-    params = {
-        "access_token": os.environ["PAGE_ACCESS_TOKEN"]
-    }
-    headers = {
-        "Content-Type": "application/json"
-    }
-
-    if language == 'fr':
-        data = json.dumps({
-            "recipient": {
-                "id": recipient_id
-            },
-            "message":{
-                "attachment":{
-                "type":"template",
-                "payload":{
-                "template_type":"generic",
-                "elements": [
-                {
-                "title": "Bonjour, qu'est-ce que je peux vous aider?",
-                    "buttons": [{
-                      "type": "postback",
-                      "title": "Chercher des fonds",
-                      "payload": "fundsearch"
-                    }],
-                },
-                {
-                "title": "BNP Paribas Investment Partners",
-                #"subtitle": "Next-generation virtual reality",
-                "item_url": "http://www.bnpparibas-ip.fr",               
-                #"image_url": "./img/bnpip.jpg",
-                    "buttons": [{
-                      "type": "web_url",
-                      "url": "http://www.bnpparibas-ip.fr",
-                      "title": "Site en FRANCAIS"
-                    }, {
-                      "type": "web_url",
-                      "url": "http://www.bnpparibas-ip.com/en/",
-                      "title": "Site en ANGLAIS",
-                    }],
-                }, 
-                {
-                "title": "Investo",
-                "item_url": "http://investo.bnpparibas/",               
-                #"image_url": "https://www.google.fr/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjbsZO-tMLSAhWJuBQKHQSADPgQjRwIBw&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Fapp%2Finvesto-par-bnp-paribas%2Fid1189529445%3Fmt%3D8&psig=AFQjCNHkkFs7ZrfJGrDcKqVwNaDesChYyw&ust=1488907950510928",
-                    "buttons": [{
-                      "type": "web_url",
-                      "url": "http://investo.bnpparibas/",
-                      "title": "TELECHARGER Investo"
-                    }]
-                },
-                {
-                "title": "Nous contacter",
-                
-                # "item_url": "http://investo.bnpparibas/",               
-                #"image_url": "https://www.google.fr/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjbsZO-tMLSAhWJuBQKHQSADPgQjRwIBw&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Fapp%2Finvesto-par-bnp-paribas%2Fid1189529445%3Fmt%3D8&psig=AFQjCNHkkFs7ZrfJGrDcKqVwNaDesChYyw&ust=1488907950510928",
-                    "buttons": [{
-                      "type": "web_url",
-                      "url": "https://mabanque.bnpparibas/fr/nous-contacter/nous-contacter",
-                      "title": "Nous contacter"
-                    }]
-                }
-                ]
-                }
-            }
-            }
-        })        
-
-    else:
-        data = json.dumps({
-            "recipient": {
-                "id": recipient_id
-            },
-            "message":{
-                "attachment":{
-                "type":"template",
-                "payload":{
-                "template_type":"generic",
-                "elements": [
-                {
-                "title": "Hello, how could I help you?",
-                    "buttons": [{
-                      "type": "postback",
-                      "title": "Search for a fund",
-                      "payload": "fundsearch"
-                    }],
-                },
-                {
-                "title": "BNP Paribas Investment Partners",
-                #"subtitle": "Next-generation virtual reality",
-                "item_url": "http://www.bnpparibas-ip.fr",               
-                #"image_url": "./img/bnpip.jpg",
-                    "buttons": [{
-                      "type": "web_url",
-                      "url": "http://www.bnpparibas-ip.fr",
-                      "title": "Website in French"
-                    }, {
-                      "type": "web_url",
-                      "url": "http://www.bnpparibas-ip.com/en/",
-                      "title": "Website in English",
-                    }],
-                }, 
-                {
-                "title": "Investo",
-                "item_url": "http://investo.bnpparibas/",               
-                #"image_url": "https://www.google.fr/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjbsZO-tMLSAhWJuBQKHQSADPgQjRwIBw&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Fapp%2Finvesto-par-bnp-paribas%2Fid1189529445%3Fmt%3D8&psig=AFQjCNHkkFs7ZrfJGrDcKqVwNaDesChYyw&ust=1488907950510928",
-                    "buttons": [{
-                      "type": "web_url",
-                      "url": "http://investo.bnpparibas/",
-                      "title": "Download Investo"
-                    }]
-                },
-                {
-                "title": "Contact us",
-                
-                # "item_url": "http://investo.bnpparibas/",               
-                #"image_url": "https://www.google.fr/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjbsZO-tMLSAhWJuBQKHQSADPgQjRwIBw&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Fapp%2Finvesto-par-bnp-paribas%2Fid1189529445%3Fmt%3D8&psig=AFQjCNHkkFs7ZrfJGrDcKqVwNaDesChYyw&ust=1488907950510928",
-                    "buttons": [{
-                      "type": "web_url",
-                      "url": "https://mabanque.bnpparibas/fr/nous-contacter/nous-contacter",
-                      "title": "Contact us"
-                    }]
-                }
-                ]
-                }
-            }
-            }
-        })
-    r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
-    if r.status_code != 200:
-        log(r.status_code)
-        log(r.text)        
-
-def received_postback(messaging_event):
-    global language    
-    sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
-    recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
-
-    # The 'payload' param is a developer-defined field which is set in a postback button for Structured Messages. 
-    payload = messaging_event["postback"]["payload"] 
-
-    log("Received postback for {user} and page {recipient}: {text}".format(user=sender_id, recipient=recipient_id, text=payload))
-
-    if payload == "fundsearch":
-        if language[sender_id] == 'fr':
-            response = "Vous pouvez taper le code ISIN comme 'lu1165135440' pour une recherche precise, ou le mot cle de nom du fonds comme 'aqua'."
-        else:
-            response = "You can either type the ISIN code such as 'lu1165135440' for a precise search of fundsheet, or type the keywords of the fund name such as 'aqua' for a vague fundsearch."
-        send_message(sender_id, response)
-    # When a postback is called, we'll send a message back to the sender to let them know it was successful
-    # send_message(sender_id, payload)
-
-def get_user_info(sender_id, fields=None):
+    global config
     """Getting information about the user
     https://developers.facebook.com/docs/messenger-platform/user-profile
     Input:
@@ -500,21 +374,106 @@ def get_user_info(sender_id, fields=None):
       Response from API as <dict>
     """
     params = {
-        "access_token": os.environ["PAGE_ACCESS_TOKEN"]
+        "access_token": config["PAGE_ACCESS_TOKEN"]
     }
-
-    request_endpoint = '{0}/{1}'.format(graph_url, sender_id)
+    request_endpoint = '{0}/{1}'.format(config['graph_url'], userId)
     response = requests.get(request_endpoint, params=params)
+
     if response.status_code == 200:
         return response.json()
+    log("response status is {code}: {text}".format(code=response.status_code, text=response.text))
+    return  
 
-    return None
-
-
+   
 def log(message):  # simple wrapper for logging to stdout on heroku
     print str(message)
-    sys.stdout.flush()
+    sys.stdout.flush() 
 
+# In[131]:
+app = Flask(__name__)
+
+@app.route('/', methods=['GET'])
+def verify():
+    # when the endpoint is registered as a webhook, it must echo back
+    # the 'hub.challenge' value it receives in the query arguments
+    
+    if request.args.get("hub.mode") == "subscribe" and request.args.get("hub.challenge"):
+        if not request.args.get("hub.verify_token") == "Mina":
+            return "Verification token mismatch", 403
+        return request.args["hub.challenge"], 200
+    return render_template('chat.html'), 200
+
+@app.route('/', methods=['POST'])
+def webhook():    
+    # endpoint for processing incoming messaging events
+    global bot_en
+    global bot_fr
+    
+    data = request.get_json()
+    log(data)  # you may not want to log every incoming message in production, but it's good for testing
+    if data["object"] == "page":
+        for entry in data["entry"]:
+            for messaging_event in entry["messaging"]:
+                userId = messaging_event["sender"]["id"] 
+                usr = User(userId)
+
+                if User.users_facebook[userId]['treat_flag']== False:   
+                    User.users_facebook[userId]['treat_flag']= True      
+
+                    if User.users_facebook[userId]['language'] == 'fr':
+                        bot = bot_fr
+                    else:
+                        bot = bot_en
+                    
+                    if messaging_event.get("message"):    # someone sent us a message  
+                        if User.users_facebook[userId]['counter']==0:
+                            print User.users_facebook[userId]
+                            bot.kernel.setPredicate("name", User.users_facebook[userId]['first_name'], userId)
+                            bot.kernel.setPredicate("gender", User.users_facebook[userId]['gender'], userId)
+                            bot.savebrain()
+                            bot.send_template_message(userId) # send the new user our introduction page
+                        try:
+                            message_text = messaging_event["message"]["text"]  # the message's text
+                        except KeyError:
+                            message_text = "smile"                           
+                        bot.send_message(userId, bot.respond(userId, message_text))
+                        
+                    if messaging_event.get("postback"):  
+                        bot.received_postback(userId, messaging_event["postback"]["payload"])
+                        
+                    if messaging_event.get("delivery"): 
+                        pass
+                    
+                    if messaging_event.get("optin"): 
+                        pass
+                    
+                    User.users_facebook[userId]['counter'] += 1
+                    User.users_facebook[userId]['treat_flag'] = False
+
+    return "ok", 200
 
 if __name__ == '__main__':
+    #configure...
+
+    with open(CONFIG_FILE) as json_data_file:
+        config = json.load(json_data_file)    
+    # try:
+    #     with open(configfile) as json_data_file:
+    #         config = json.load(json_data_file)
+    #         print config
+    # except:
+    #     print("cannot load configuration file.")    
+    
+    filename = 'funds'+'-'+time.strftime("%Y-%m-%d")+'.csv'
+    
+    if not os.path.isfile(filename):
+        init_fundsheet(config['fundsearch_url'], config['fundsheet_url_base'])    #to rename url...
+        
+    bot_en = Bot("Pikachu", config, language = 'en')
+    bot_fr = Bot("Pikachu", config, language = 'fr')
+    
     app.run(debug=True)
+
+
+
+
