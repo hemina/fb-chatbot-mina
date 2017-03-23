@@ -24,27 +24,20 @@ class User(object):
         cls.users_facebook[userId] = user
         return  
     
-    # @classmethod
-    # def check_user_facebook(cls, userId):
-    #     if cls.users_facebook.get(userId):
-    #         return True
-    #     return False
-    
-    #for Facebook
     def __init__(self, userId):
         self.userId = userId
         if not User.users_facebook.get(userId):
             try:
                 user = get_user_info(userId) 
                 user['language'] = user['locale'].split("_")[0]
+                if user['language'] != 'fr':
+                    user['language'] = 'en'
                 user['counter'] = 0
-                user['treat_flag'] = False
                 self.add_user_facebook(userId, user) 
             except: # when can't get user profil
                 user = {}
                 user['language'] = 'en'
-                user['counter'] = 0
-                user['treat_flag'] = False                
+                user['counter'] = 0               
                 self.add_user_facebook(userId, user)
         else:
             pass #user already in the list
@@ -251,56 +244,68 @@ class Bot(object):
     def received_postback(self, sender_id, payload):
         log("Received postback for {user}: {text}".format(user=sender_id, text=payload))
         if payload == "fundsearch":
-            if self.language == 'fr':
-                response = "Vous pouvez taper le code ISIN comme 'lu1165135440' pour une recherche precise, ou le mot cle de nom du fonds comme 'aqua'."
-            else:
-                response = "You can either type the ISIN code such as 'lu1165135440' for a precise search of fundsheet, or type the keywords of the fund name such as 'aqua' for a vague fundsearch."
+            response = self.config[self.language]['fundsearch_postback']
             self.send_message(sender_id, response) 
         return 
             
-    @staticmethod
-    def check_isin(code, isin_list):
-        return (code.lower() in isin_list)
+    def check_isin(self, message_text):
+        msg_isin_list = re.findall(r'[a-zA-Z]{2}[0-9]{10}', message_text)
 
-    @staticmethod
-    def check_name(name, name_list_str):
-        return (name.lower() in name_list_str.lower())
+        url = []
+        isin_list = self.dict_url.keys()
+
+        for element in msg_isin_list:
+            if element in isin_list:
+                url.append(self.dict_url[message_text])
+                
+        if len(url) == 1:
+            response = config[self.language]['isin_url_response'] + url[0]
+            
+        elif len(url) == 0:
+            return ''
+
+        else:
+            url_list_str = ' \n '.join(url)
+            response = config[self.language]['list_isin_url_response'] + url_list_str
+
+        return response
+
+    def check_name(self, message_text):
+        keywords = re.split('[^a-zA-Z0-9]', message_text)
+        for k in keywords:
+            if k.lower() not in self.name_list_str.lower():
+                return ''
+        response = config[self.language]['name_url_response']+self.config['name_fund_search']+'-'.join(keywords)
+        return response         
 
     def respond(self, sessionId, message_text):
         try:
             message_text = unicodedata.normalize('NFD', message_text).encode('ascii', 'ignore').lower()
+
         except TypeError:
             message_text = message_text.encode('ascii', 'ignore').lower()
         #print message_text
-        if self.language == 'fr':
-            if check_isin(message_text, self.dict_url.keys()):       
-                url = self.dict_url[message_text]
-                bot_response = " Veuillez trouver ici le fundsheet vous cherchez : "+ url                            
-            elif check_name(message_text, self.name_list_str):
-                keywords = re.sub(' ', '+', message_text)
-                url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords  
-                bot_response =  " Tentez ce lien pour plus d'informations: "+ url
-            else:
-                bot_response = self.kernel.respond(message_text, sessionId)
-        else: 
-            if self.check_isin(message_text, self.dict_url.keys()):       
-                url = self.dict_url[message_text]
-                bot_response = " Please find here the fundsheet you are looking for : "+ url                            
-            elif self.check_name(message_text, self.name_list_str):
-                keywords = re.sub(' ', '+', message_text)
-                url = "http://www.bnpparibas-ip.fr/investisseur-prive-particulier/?s="+keywords  
-                bot_response = " Maybe you can try this link: "+ url      
-            else:
-                bot_response = self.kernel.respond(message_text, sessionId)                
-        if bot_response == "" :
+        text = self.check_isin(message_text)
+        if text != '':
+            bot_response = text
+            return bot_response
+
+        text = self.check_name(message_text)
+        if text != '':
+            bot_response = text
+            return bot_response        
+
+        else:
+            bot_response = self.kernel.respond(message_text, sessionId)
+             
+        if bot_response == '' :
             bot_response = ':)' 
+
         return bot_response   
         
     def savebrain(self):
         self.kernel.saveBrain("bot_brain_"+self.language+".brn")
 
-
-# In[129]:
 
 def init_fundsheet(fundsearch_url, fundsheet_url_base):
     d = json.loads(urllib.urlopen(fundsearch_url).read())
@@ -308,7 +313,10 @@ def init_fundsheet(fundsearch_url, fundsheet_url_base):
 
     name_list = []
     for i in xrange(data.shape[0]):
-        name_list.append(data['default_share_name'][i]) 
+        # replace other characters by space
+        name = re.sub(r'[^a-zA-Z0-9\'\ ]+', ' ', data['default_share_name'][i])
+        name = re.sub(r'[\ ]+', ' ', name)
+        name_list.append(name) 
 
     #name_list  
     name_list_str = ' ,'.join(name_list)
@@ -401,24 +409,27 @@ def verify():
         if not request.args.get("hub.verify_token") == "Mina":
             return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
-    return render_template('chat.html'), 200
+    return "hello world", 200
 
 @app.route('/', methods=['POST'])
 def webhook():    
     # endpoint for processing incoming messaging events
     global bot_en
     global bot_fr
-    
+    treat_flag = {}
+
     data = request.get_json()
     log(data)  # you may not want to log every incoming message in production, but it's good for testing
     if data["object"] == "page":
         for entry in data["entry"]:
-            for messaging_event in entry["messaging"]:
-                userId = messaging_event["sender"]["id"] 
-                usr = User(userId)
+            if entry['id'] not in treat_flag:
+                treat_flag[entry['id']] = False
+            if treat_flag[entry['id']] == False:
+                treat_flag[entry['id']] = True
 
-                if User.users_facebook[userId]['treat_flag']== False:   
-                    User.users_facebook[userId]['treat_flag']= True      
+                for messaging_event in entry["messaging"]:
+                    userId = messaging_event["sender"]["id"] 
+                    usr = User(userId)   
 
                     if User.users_facebook[userId]['language'] == 'fr':
                         bot = bot_fr
@@ -448,7 +459,6 @@ def webhook():
                         pass
                     
                     User.users_facebook[userId]['counter'] += 1
-                    User.users_facebook[userId]['treat_flag'] = False
 
     return "ok", 200
 
@@ -468,7 +478,7 @@ if __name__ == '__main__':
     
     if not os.path.isfile(filename):
         init_fundsheet(config['fundsearch_url'], config['fundsheet_url_base'])    #to rename url...
-        
+    log("bot_en")
     bot_en = Bot("Pikachu", config, language = 'en')
     bot_fr = Bot("Pikachu", config, language = 'fr')
     
