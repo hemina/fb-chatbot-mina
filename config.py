@@ -116,6 +116,98 @@ ANSWERS = {
             }]
           }    
 
+ANSWERS_FR = {
+           '0':[{
+              "content_type":"text",
+              "title":"1000 euros",
+              "payload":"invest_amount"
+            },
+            {
+              "content_type":"text",
+              "title":"5000 euros",
+              "payload": "invest_amount"
+            },
+            {
+              "content_type":"text",
+              "title":"10000 euros",
+              "payload": "invest_amount"
+            },
+            {
+              "content_type":"text",
+              "title":"50000 euros",
+              "payload": "invest_amount"
+            }],
+           '1':[{
+              "content_type":"text",
+              "title":"1 an",
+              "payload":"horizon"
+            },
+            {
+              "content_type":"text",
+              "title":"5 ans",
+              "payload": "horizon"
+            },
+            {
+              "content_type":"text",
+              "title":"10 ans",
+              "payload": "horizon"
+            },
+            {
+              "content_type":"text",
+              "title":"20 ans",
+              "payload": "horizon"
+            },
+            {
+              "content_type":"text",
+              "title":"30 ans",
+              "payload": "horizon"
+            }],
+           '2':[{
+              "content_type":"text",
+              "title":"Très bas",
+              "payload":"risks"
+            },
+            {
+              "content_type":"text",
+              "title":"Bas",
+              "payload": "risks"
+            },
+            {
+              "content_type":"text",
+              "title":"Moyen",
+              "payload": "risks"
+            },
+            {
+              "content_type":"text",
+              "title":"Haut",
+              "payload": "risks"
+            },
+            {
+              "content_type":"text",
+              "title":"Très haut",
+              "payload": "risks"
+            }],    
+           '3':[{
+              "content_type":"text",
+              "title":"None",
+              "payload":"investment_options"
+            },
+            {
+              "content_type":"text",
+              "title":"Fonds responsables",
+              "payload": "investment_options"
+            },
+            {
+              "content_type":"text",
+              "title":"Fonds finançant les PME",
+              "payload": "investment_options"
+            },
+            {
+              "content_type":"text",
+              "title":"ETF",
+              "payload": "investment_options"
+            }]
+          }    
 
 config = {'PAGE_ACCESS_TOKEN' : 'EAAXIHwFxIAQBAK3Kad8eujNr8FZBZCnXbfbP2L5WjKVIA4FshgyqvVqzDs1pRjwdjn2iLZCwx9uzzWZAADhppRs8K1BfZBynPeJwaSZBnGDGQTeTEueiGZA3ZBQGLFDdmWZAV88oOFRT5jU6MN0Cs3nZAZBovT0UvlYkPo1trOWXlN3PwZDZD',
           'graph_url' : 'https://graph.facebook.com/v2.6',
@@ -164,10 +256,24 @@ config = {'PAGE_ACCESS_TOKEN' : 'EAAXIHwFxIAQBAK3Kad8eujNr8FZBZCnXbfbP2L5WjKVIA4
             'roboAdvisor':
               {
                 'ask_invest_type':"What is your project ?", 
-                'just_invest': {'title':"Just invest", 'questions':load_questions('just_invest', 'fr')},
-                'retirement':{'title':"Retirement", 'questions':load_questions('retirement', 'fr')},
-                'other_project':{'title':"I have other projet.", 'questions':load_questions('other_project', 'fr')}               
-              }
+                'just_invest': 
+                {
+                'title':"Just invest", 
+                'questions':load_questions('just_invest', 'fr'),
+                'answers': ANSWERS_FR          
+                },
+                'retirement':
+                {
+                'title':"Retirement", 
+                'questions':load_questions('retirement', 'fr'),
+                'answers': ANSWERS_FR 
+                },
+                'other_project':{
+                'title':"I have other projet.", 
+                'questions':load_questions('other_project', 'fr'),
+                'answers': ANSWERS_FR 
+                }               
+              }            
             }
          }
 with open('config.json', 'w') as outfile:

@@ -601,7 +601,7 @@ bot_fr = Bot("Pikachu", config, language = 'fr')
 if __name__ == '__main__':
     #configure...
     log("main function.............")
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True)
 
 
 
