@@ -599,7 +599,7 @@ log("bot_en")
 bot_en = Bot("Pikachu", config, language = 'en')
 bot_fr = Bot("Pikachu", config, language = 'fr')
 log("bot_en.............")
-app.run(debug=True)
+app.run(debug=True, host='0.0.0.0')
 
 
 
