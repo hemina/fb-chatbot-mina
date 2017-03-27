@@ -597,8 +597,6 @@ log("bot_en")
 bot_en = Bot("Pikachu", config, language = 'en')
 bot_fr = Bot("Pikachu", config, language = 'fr')
 
-log("bot_en.............")
-
 
 if __name__ == '__main__':
     #configure...
