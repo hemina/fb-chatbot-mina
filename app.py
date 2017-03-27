@@ -560,7 +560,10 @@ def webhook():
                             elif question_type == "risks":                               
                                 bot.send_questions(userId, bot.payload, 3)
                             elif question_type == "investment_options":  
-                                pass     # rendre result page                        
+                                response = "The development of result is not yet ready, please try this link to complete your simulation: https://api.is.bnpparibas-ip.com/robo-invest/ "
+                                bot.send_message(userId, response)
+
+                                #pass     # rendre result page                        
                                 #bot.send_questions(userId, bot.payload, 4)                                                                                                
                         else:             
                             bot.send_message(userId, bot.respond(userId, message_text))
