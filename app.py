@@ -593,7 +593,7 @@ filename = 'funds'+'-'+time.strftime("%Y-%m-%d")+'.csv'
 
 if not os.path.isfile(filename):
     init_fundsheet(config['fundsearch_url'], config['fundsheet_url_base'])    #to rename url...
-log("bot_en")
+log("bot_en........")
 bot_en = Bot("Pikachu", config, language = 'en')
 bot_fr = Bot("Pikachu", config, language = 'fr')
 
