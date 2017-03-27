@@ -199,7 +199,7 @@ ANSWERS_FR = {
             },
             {
               "content_type":"text",
-              "title":"Fonds finançant les PME",
+              "title":"Fonds PME",
               "payload": "investment_options"
             },
             {
