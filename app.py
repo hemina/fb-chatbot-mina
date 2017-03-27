@@ -578,27 +578,31 @@ def webhook():
 
     return "ok", 200
 
+
+with open(CONFIG_FILE) as json_data_file:
+    config = json.load(json_data_file)   
+print  
+# try:
+#     with open(configfile) as json_data_file:
+#         config = json.load(json_data_file)
+#         print config
+# except:
+#     print("cannot load configuration file.")    
+
+filename = 'funds'+'-'+time.strftime("%Y-%m-%d")+'.csv'
+
+if not os.path.isfile(filename):
+    init_fundsheet(config['fundsearch_url'], config['fundsheet_url_base'])    #to rename url...
+log("bot_en")
+bot_en = Bot("Pikachu", config, language = 'en')
+bot_fr = Bot("Pikachu", config, language = 'fr')
+
+log("bot_en.............")
+
+
 if __name__ == '__main__':
     #configure...
     log("main function.............")
-    with open(CONFIG_FILE) as json_data_file:
-        config = json.load(json_data_file)   
-    print  
-    # try:
-    #     with open(configfile) as json_data_file:
-    #         config = json.load(json_data_file)
-    #         print config
-    # except:
-    #     print("cannot load configuration file.")    
-
-    filename = 'funds'+'-'+time.strftime("%Y-%m-%d")+'.csv'
-
-    if not os.path.isfile(filename):
-        init_fundsheet(config['fundsearch_url'], config['fundsheet_url_base'])    #to rename url...
-    log("bot_en")
-    bot_en = Bot("Pikachu", config, language = 'en')
-    bot_fr = Bot("Pikachu", config, language = 'fr')
-    log("bot_en.............")
     app.run(debug=True, host='0.0.0.0')
 
 
