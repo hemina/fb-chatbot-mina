@@ -580,7 +580,7 @@ def webhook():
 
 if __name__ == '__main__':
     #configure...
-
+    log("main function.............")
     with open(CONFIG_FILE) as json_data_file:
         config = json.load(json_data_file)    
     # try:
@@ -597,7 +597,7 @@ if __name__ == '__main__':
     log("bot_en")
     bot_en = Bot("Pikachu", config, language = 'en')
     bot_fr = Bot("Pikachu", config, language = 'fr')
-    
+    log("bot_en.............")
     app.run(debug=True)
 
 
