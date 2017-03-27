@@ -17,16 +17,16 @@ class User(object):
     with open(CONFIG_FILE) as json_data_file:
         config = json.load(json_data_file)   
 
-    users_facebook = {}
+    users = {}
     
     @classmethod
     def add_user_facebook(cls, userId, user):
-        cls.users_facebook[userId] = user
+        cls.users[userId] = user
         return  
     
     def __init__(self, userId):
         self.userId = userId
-        if not User.users_facebook.get(userId):
+        if not User.users.get(userId):
             try:
                 user = get_user_info(userId) 
                 user['language'] = user['locale'].split("_")[0]
@@ -48,6 +48,7 @@ class Bot(object):
     def __init__(self, name, config, language = 'en'):
         self.name = name
         self.config = config
+        self.payload = "just_invest"
         self.language = language
         self.kernel = aiml.Kernel()
         self.kernel.setBotPredicate('name', self.name)
@@ -130,10 +131,18 @@ class Bot(object):
                     "title": "Bonjour, qu'est-ce que je peux vous aider?",
                         "buttons": [{
                           "type": "postback",
-                          "title": "Chercher des fonds",
-                          "payload": "fundsearch"
+                          "title": "Plan d'investissement",
+                          "payload":"roboAdvisor"
                         }],
                     },
+                    {
+                    "title": "Vous voulez chercher des fonds avec le code ISIN ou le nom?",
+                        "buttons": [{
+                          "type": "postback",
+                          "title": "Chercher des fonds",
+                          "payload":"fundsearch"
+                        }],
+                    },                    
                     {
                     "title": "BNP Paribas Investment Partners",
                     #"subtitle": "Next-generation virtual reality",
@@ -191,15 +200,21 @@ class Bot(object):
                     "title": "Hello, how could I help you?",
                         "buttons": [{
                           "type": "postback",
+                          "title": "Investment Planning",
+                          "payload": "roboAdvisor"
+                        }],
+                    },                    
+                    {
+                    "title": "Would you like to search for a fund by the isin code or the name?",
+                        "buttons": [{
+                          "type": "postback",
                           "title": "Search for a fund",
-                          "payload": "fundsearch"
+                          "payload":"fundsearch"
                         }],
                     },
                     {
                     "title": "BNP Paribas Investment Partners",
-                    #"subtitle": "Next-generation virtual reality",
                     "item_url": "http://www.bnpparibas-ip.fr",               
-                    #"image_url": "./img/bnpip.jpg",
                         "buttons": [{
                           "type": "web_url",
                           "url": "http://www.bnpparibas-ip.fr",
@@ -241,11 +256,94 @@ class Bot(object):
             log(r.status_code)
             log(r.text)               
 
+    def ask_invest_type(self, recipient_id):
+
+        log("ask_invest_type to {recipient}".format(recipient=recipient_id))
+
+        params = {
+            "access_token": self.config["PAGE_ACCESS_TOKEN"]
+        }
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        data = json.dumps({
+            "recipient": {
+                "id": recipient_id
+            },
+            "message":
+            {
+                "attachment":
+                {
+                    "type":"template",
+                    "payload":
+                    {
+                        "template_type":"generic",
+                        "elements": 
+                        [{
+                        "title": self.config[self.language]['roboAdvisor']['ask_invest_type'],
+                            "buttons": 
+                            [{
+                              "type": "postback",
+                              "title": self.config[self.language]['roboAdvisor']['just_invest']['title'],
+                              "payload": "just_invest"
+                            },
+                            {
+                              "type": "postback",
+                              "title": self.config[self.language]['roboAdvisor']['retirement']['title'],
+                              "payload": "retirement"
+                            },
+                            {
+                              "type": "postback",
+                              "title": self.config[self.language]['roboAdvisor']['other_project']['title'],
+                              "payload": "other_project"
+                            }]
+                        }]                              
+                    }
+                }
+            }
+        })
+        r = requests.post(self.config['graph_url']+"/me/messages", params=params, headers=headers, data=data)
+        if r.status_code != 200:
+            log(r.status_code)
+            log(r.text) 
+
+    def send_questions(self, sender_id, invest_type, i=0):
+        log("send_question_{i} to {sender_id}".format(i = i, sender_id=sender_id))
+
+        params = {
+            "access_token": self.config["PAGE_ACCESS_TOKEN"]
+        }
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        data = json.dumps({
+            "recipient": {
+                "id": sender_id
+            },
+            "message":{
+            "text": self.config[self.language]['roboAdvisor'][invest_type]['questions'][str(i)],
+            "quick_replies": self.config[self.language]['roboAdvisor'][invest_type]['answers'][str(i)]
+            }                        
+        })
+        r = requests.post(self.config['graph_url']+"/me/messages", params=params, headers=headers, data=data)
+        if r.status_code != 200:
+            log(r.status_code)
+            log(r.text)        
+             
+
     def received_postback(self, sender_id, payload):
+        print payload
+        self.payload = payload
         log("Received postback for {user}: {text}".format(user=sender_id, text=payload))
         if payload == "fundsearch":
             response = self.config[self.language]['fundsearch_postback']
             self.send_message(sender_id, response) 
+        elif payload == "roboAdvisor":
+            self.ask_invest_type(sender_id)           
+        else:
+            self.send_questions(sender_id, payload)
         return 
             
     def check_isin(self, message_text):
@@ -308,6 +406,7 @@ class Bot(object):
 
 
 def init_fundsheet(fundsearch_url, fundsheet_url_base):
+    log('initializing fundsheet......')
     d = json.loads(urllib.urlopen(fundsearch_url).read())
     data = pd.DataFrame(d['funds'])
 
@@ -431,23 +530,40 @@ def webhook():
                     userId = messaging_event["sender"]["id"] 
                     usr = User(userId)   
 
-                    if User.users_facebook[userId]['language'] == 'fr':
+                    if User.users[userId]['language'] == 'fr':
                         bot = bot_fr
                     else:
                         bot = bot_en
                     
-                    if messaging_event.get("message"):    # someone sent us a message  
-                        if User.users_facebook[userId]['counter']==0:
-                            print User.users_facebook[userId]
-                            bot.kernel.setPredicate("name", User.users_facebook[userId]['first_name'], userId)
-                            bot.kernel.setPredicate("gender", User.users_facebook[userId]['gender'], userId)
+                    if messaging_event.get("message"):    # someone sent us a message                      
+                        if User.users[userId]['counter']==0:
+                            print User.users[userId]
+                            try:
+                                bot.kernel.setPredicate("name", User.users[userId]['first_name'], userId)
+                                bot.kernel.setPredicate("gender", User.users[userId]['gender'], userId)
+                            except:
+                                pass
                             bot.savebrain()
                             bot.send_template_message(userId) # send the new user our introduction page
                         try:
                             message_text = messaging_event["message"]["text"]  # the message's text
                         except KeyError:
-                            message_text = "smile"                           
-                        bot.send_message(userId, bot.respond(userId, message_text))
+                            message_text = "smile"          
+                        if messaging_event["message"].get("quick_reply"):
+                            question_type = messaging_event["message"]["quick_reply"]["payload"] 
+                            print bot.payload    
+                            print question_type
+                            if question_type == "invest_amount":                               
+                                bot.send_questions(userId, bot.payload, 1)
+                            elif question_type == "horizon":                               
+                                bot.send_questions(userId, bot.payload, 2)
+                            elif question_type == "risks":                               
+                                bot.send_questions(userId, bot.payload, 3)
+                            elif question_type == "investment_options":  
+                                pass     # rendre result page                        
+                                #bot.send_questions(userId, bot.payload, 4)                                                                                                
+                        else:             
+                            bot.send_message(userId, bot.respond(userId, message_text))
                         
                     if messaging_event.get("postback"):  
                         bot.received_postback(userId, messaging_event["postback"]["payload"])
@@ -458,7 +574,7 @@ def webhook():
                     if messaging_event.get("optin"): 
                         pass
                     
-                    User.users_facebook[userId]['counter'] += 1
+                    User.users[userId]['counter'] += 1
 
     return "ok", 200
 

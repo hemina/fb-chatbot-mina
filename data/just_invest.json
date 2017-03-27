@@ -1,0 +1,224 @@
+{
+  "questions": [
+    {
+      "answers": [
+        {
+          "answer_type": "initial_amount",
+          "funds_list_name": null,
+          "id": 118,
+          "input_type": "text",
+          "picto": null,
+          "question_id": 1,
+          "risk": null,
+          "titles": {
+            "de_DE": "Amount to invest now",
+            "en_GB": "Amount to invest now",
+            "fr_FR": "Montant \u00e0 investir d\u00e8s maintenant"
+          }
+        },
+        {
+          "answer_type": "monthly_amount",
+          "funds_list_name": null,
+          "id": 119,
+          "input_type": "text",
+          "picto": null,
+          "question_id": 1,
+          "risk": null,
+          "titles": {
+            "de_DE": "additional monthly amount",
+            "en_GB": "additional monthly amount",
+            "fr_FR": "Montant mensuel compl\u00e9mentaire"
+          }
+        }
+      ],
+      "id": 1,
+      "order": 0,
+      "question_type": "amount",
+      "survey_id": 1,
+      "titles": {
+        "de_DE": "Wie veil wollen Sie anlegen?",
+        "en_GB": "How much do you want to invest?",
+        "fr_FR": "Combien souhaitez-vous investir ?"
+      }
+    },
+    {
+      "answers": [
+        {
+          "answer_type": null,
+          "funds_list_name": null,
+          "id": 124,
+          "input_type": "text",
+          "picto": null,
+          "question_id": 4,
+          "risk": null,
+          "titles": {
+            "de_DE": "Years",
+            "en_GB": "Years",
+            "fr_FR": "Nombre d'ann\u00e9es"
+          }
+        }
+      ],
+      "id": 4,
+      "order": 1,
+      "question_type": "horizon",
+      "survey_id": 1,
+      "titles": {
+        "de_DE": "What is your investment timeline?",
+        "en_GB": "What is your investment timeline?",
+        "fr_FR": "Quel est votre horizon d'investissement ?"
+      }
+    },
+    {
+      "answers": [
+        {
+          "answer_type": null,
+          "funds_list_name": null,
+          "id": 113,
+          "input_type": "radio",
+          "picto": null,
+          "question_id": 2,
+          "risk": 0.03,
+          "titles": {
+            "de_DE": "Very low: I want to invest my money as securely as possible. My Chances of gains are therefore lower, as are my risks of losses.",
+            "en_GB": "Very low: I want to invest my money as securely as possible. My Chances of gains are therefore lower, as are my risks of losses.",
+            "fr_FR": "Tr\u00e8s faible: Je veux investir mon argent de la mani\u00e8re la plus s\u00e9curis\u00e9e possible. Mes chances de gains et de pertes seront donc moins importantes."
+          }
+        },
+        {
+          "answer_type": null,
+          "funds_list_name": null,
+          "id": 114,
+          "input_type": "radio",
+          "picto": null,
+          "question_id": 2,
+          "risk": 0.06,
+          "titles": {
+            "de_DE": "Low: I am prepared to take a few risks in order to increase my chances of gains.",
+            "en_GB": "Low: I am prepared to take a few risks in order to increase my chances of gains.",
+            "fr_FR": "Faible: Je suis pr\u00eat \u00e0 prendre quelques risques pour augmenter mes chances de gains."
+          }
+        },
+        {
+          "answer_type": null,
+          "funds_list_name": null,
+          "id": 115,
+          "input_type": "radio",
+          "picto": null,
+          "question_id": 2,
+          "risk": 0.09,
+          "titles": {
+            "de_DE": "Moderate: I believe my chances for gains are higher than the likelihood of losing a proportion of my money. For this reason I can also accept a moderate level of risk.",
+            "en_GB": "Moderate: I believe my chances for gains are higher than the likelihood of losing a proportion of my money. For this reason I can also accept a moderate level of risk.",
+            "fr_FR": "Moyenne: J'estime mes chances de gains sup\u00e9rieures \u00e0 mes possibilit\u00e9s de pertes. Pour cette raison, je suis pr\u00eat \u00e0 accepter un niveau de risque mod\u00e9r\u00e9."
+          }
+        },
+        {
+          "answer_type": null,
+          "funds_list_name": null,
+          "id": 116,
+          "input_type": "radio",
+          "picto": null,
+          "question_id": 2,
+          "risk": 0.12,
+          "titles": {
+            "de_DE": "High: I want to significantly increase my chances of gains and so knowingly take the risk and accept the risk that I might lose money in long term.",
+            "en_GB": "High: I want to significantly increase my chances of gains and so knowingly take the risk and accept the risk that I might lose money in long term.",
+            "fr_FR": "Forte: Je veux significativement augmenter mes chances de gains et donc prendre et accepter le risque que je puisse perdre de l'argent sur le long terme."
+          }
+        },
+        {
+          "answer_type": null,
+          "funds_list_name": null,
+          "id": 117,
+          "input_type": "radio",
+          "picto": null,
+          "question_id": 2,
+          "risk": 0.15,
+          "titles": {
+            "de_DE": "Very high: I want to increase my chances of gains as much as possible",
+            "en_GB": "Very high: I want to increase my chances of gains as much as possible",
+            "fr_FR": "Tr\u00e8s forte: Je veux augmenter mes chances de gains autant que possible"
+          }
+        }
+      ],
+      "id": 2,
+      "order": 2,
+      "question_type": "risks",
+      "survey_id": 1,
+      "titles": {
+        "de_DE": "What is your risk appetence?",
+        "en_GB": "What is your risk appetence?",
+        "fr_FR": "Quelle est votre appetence au risque ?"
+      }
+    },
+    {
+      "answers": [
+        {
+          "answer_type": "",
+          "funds_list_name": "Generic-1",
+          "id": 214,
+          "input_type": "radio",
+          "picto": "no",
+          "question_id": 3,
+          "risk": null,
+          "titles": {
+            "de_DE": "No",
+            "en_GB": "No",
+            "fr_FR": "Non"
+          }
+        },
+        {
+          "answer_type": null,
+          "funds_list_name": "ISR5",
+          "id": 215,
+          "input_type": "radio",
+          "picto": "responsible",
+          "question_id": 3,
+          "risk": null,
+          "titles": {
+            "de_DE": "Yes, I want to include social and responsible investment",
+            "en_GB": "Yes, I want to include social and responsible investment",
+            "fr_FR": "Oui, je veux inclure des fonds responsables"
+          }
+        },
+        {
+          "answer_type": null,
+          "funds_list_name": "smids6",
+          "id": 216,
+          "input_type": "radio",
+          "picto": "small_caps",
+          "question_id": 3,
+          "risk": null,
+          "titles": {
+            "de_DE": "Yes, I want to include small caps funds",
+            "en_GB": "Yes, I want to include small caps funds",
+            "fr_FR": "Oui, je souhaite int\u00e9grer des fonds finan\u00e7ant les petites et moyennes entreprises"
+          }
+        },
+        {
+          "answer_type": null,
+          "funds_list_name": "etf10",
+          "id": 217,
+          "input_type": "radio",
+          "picto": "etf",
+          "question_id": 3,
+          "risk": null,
+          "titles": {
+            "de_DE": "Yes I want only ETF in my portfolio",
+            "en_GB": "Yes I want only ETF in my portfolio",
+            "fr_FR": "Oui, je ne souhaite que des ETF dans mon portefeuille"
+          }
+        }
+      ],
+      "id": 3,
+      "order": 3,
+      "question_type": "investment_options",
+      "survey_id": 1,
+      "titles": {
+        "de_DE": "Do you want to include specific funds in your portfolio?",
+        "en_GB": "Do you want to include specific funds in your portfolio?",
+        "fr_FR": "Souhaitez-vous inclure certains types de fonds dans votre portefeuille ?"
+      }
+    }
+  ]
+}
