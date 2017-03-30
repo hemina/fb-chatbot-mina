@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 MarkupSafe is written and maintained by Armin Ronacher and
 various contributors:
 
@@ -11,3 +12,18 @@ Patches and Suggestions
 
 - Georg Brandl
 - Mickaël Guérin
+=======
+MarkupSafe is written and maintained by Armin Ronacher and
+various contributors:
+
+Development Lead
+````````````````
+
+- Armin Ronacher <armin.ronacher@active-4.com>
+
+Patches and Suggestions
+```````````````````````
+
+- Georg Brandl
+- Mickaël Guérin
+>>>>>>> 41cd3a0af40777acbc2c185fd0d9df9f385976cd
