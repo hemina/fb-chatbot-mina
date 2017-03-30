@@ -5,7 +5,7 @@
 
 import os, requests, json, sys
 import random, string
-import urllib, pickle, unicodedata, re, time
+import urllib,codecs, pickle, unicodedata, re, time
 import pandas as pd
 import aiml
 from flask import Flask, render_template, request, jsonify
@@ -499,7 +499,7 @@ def log(message):  # simple wrapper for logging to stdout on heroku
 
 app = Flask(__name__)
 
-@app.route('/', methods=['GET'])
+@app.route('/chat-bot', methods=['GET'])
 def verify():
     # when the endpoint is registered as a webhook, it must echo back
     # the 'hub.challenge' value it receives in the query arguments
@@ -510,7 +510,7 @@ def verify():
         return request.args["hub.challenge"], 200
     return "hello world", 200
 
-@app.route('/', methods=['POST'])
+@app.route('/chat-bot', methods=['POST'])
 def webhook():    
     # endpoint for processing incoming messaging events
     global bot_en
@@ -592,8 +592,8 @@ print
 # except:
 #     print("cannot load configuration file.")    
 
-filename = 'funds'+'-'+time.strftime("%Y-%m-%d")+'.csv'
-
+#filename = 'funds'+'-'+time.strftime("%Y-%m-%d")+'.json'
+filename = 'funds-2017-03-30.json'
 if not os.path.isfile(filename):
     init_fundsheet(config['fundsearch_url'], config['fundsheet_url_base'])    #to rename url...
 log("bot_en........")
